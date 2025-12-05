@@ -16,37 +16,34 @@
     position: absolute;
     top: 30px;
     left: 40px;
-    background: rgb(67,81,63);
+    background: rgb(67, 81, 63);
     color: white;
     padding: 30px 30px;
     border-radius: 30px;
     font-family: Arial, sans-serif;
-    font-size: 24px;
-    max-width: 220px;
+    font-size: 28px;
+    max-width: 360px;
     line-height: 1.5;
     display: none;
     box-shadow: 0px 6px 22px rgba(0,0,0,0.25);
   }
 
-  /* Make the metadata INDEX bigger */
   .infoBox b {
-    font-size: 20px; 
+    font-size: 36px; 
     display: block; 
     margin-top: 10px;
   }
 
-  /* Big logo full width */
   .infoLogoBig {
     width: 100%;
     display: block;
     margin: 20px auto 0 auto;
   }
 
-  /* Container for two small logos */
   .smallLogoContainer {
     position: relative;
     width: 100%;
-    height: 30px;
+    height: 80px;
     margin-top: 10px;
   }
 
@@ -81,13 +78,11 @@ mapboxgl.accessToken =
 const map = new mapboxgl.Map({
   container: "map",
   style: "mapbox://styles/mapbox/satellite-v9",
-
-  center: { lng: -87.4323, lat: 20.30096 },
-  zoom: 13.78,
-  pitch: 35.5,
-  bearing: 90,
+  center: { lng: -87.43715249608606, lat: 20.30514220104367 },
+  zoom: 15.4,
+  pitch: 64.9,
+  bearing: 172.5,
   antialias: true,
-
   prefetchZoomDelta: 3,
   maxTileCacheSize: 1024,
   fadeDuration: 0
@@ -109,7 +104,7 @@ map.on("style.load", () => {
 
     onAdd: function () {
 
-      /* Lighting */
+      // Lighting
       tb.world.add(new THREE.AmbientLight(0xffffff, 60));
       tb.world.add(new THREE.HemisphereLight(0xffffff, 0x555555, 60));
 
@@ -121,7 +116,7 @@ map.on("style.load", () => {
       fill.position.set(-300, 300, -300);
       tb.world.add(fill);
 
-      /* LOAD GLB */
+      // Load GLB
       const options = {
         obj: "https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/VENDIBLES.glb",
         type: "gltf",
@@ -155,12 +150,22 @@ map.on("style.load", () => {
             selectedObject.material = originalMaterial;
           }
 
+          // --- Highlight material (beige with emissive glow) ---
           selectedObject = obj;
           originalMaterial = obj.material;
 
-          obj.material = obj.material.clone();
-          obj.material.color.set("#00ff00");
+          const highlight = obj.material.clone();
 
+          if (highlight.map) highlight.map = null; // remove texture
+          highlight.color.set("#AF6F09"); // beige
+          highlight.emissive = new THREE.Color("#AF6F09");
+          highlight.emissiveIntensity = 0.95;
+          highlight.opacity = 0.9;
+          highlight.transparent = true;
+
+          obj.material = highlight;
+
+          // Metadata info box
           let infoText = "";
           let found = false;
 
@@ -187,7 +192,7 @@ map.on("style.load", () => {
 
           if (!found) infoText = "No metadata found.";
 
-          /* Logos */
+          // Logos
           infoText += `
             <img class="infoLogoBig"
                  src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
@@ -216,17 +221,3 @@ map.on("style.load", () => {
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
