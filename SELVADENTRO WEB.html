@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>3D Model Metadata Viewer (Threebox + Mapbox)</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.js"></script>
+
+<style>
+  body { margin: 0; padding: 0; }
+  #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
+  .infoBox {
+    position: absolute;
+    top: 30px;
+    left: 40px;
+    background: rgb(83,116,86);
+    color: white;
+    padding: 30px 30px;
+    border-radius: 30px;
+    font-family: Arial, sans-serif;
+    font-size: 28px;
+    max-width: 360px;
+    line-height: 1.5;
+    display: none;
+    box-shadow: 0px 6px 22px rgba(0,0,0,0.25);
+  }
+
+  /* Make the metadata INDEX bigger */
+  .infoBox b {
+    font-size: 36px; 
+    display: block; 
+    margin-top: 10px;
+  }
+
+  /* Big logo full width */
+  .infoLogoBig {
+    width: 100%;
+    display: block;
+    margin: 20px auto 0 auto;
+  }
+
+  /* Container for two small logos */
+  .smallLogoContainer {
+    position: relative;
+    width: 100%;
+    height: 80px;
+    margin-top: 10px;
+  }
+
+  .smallLogo {
+    position: absolute;
+    width: 25%;
+  }
+
+  .smallLogo.left {
+    left: calc(50% - 25% - 50px);
+  }
+
+  .smallLogo.right {
+    left: calc(50% + 50px);
+  }
+</style>
+</head>
+
+<body>
+
+<!-- THREEBOX -->
+<link href="https://cdn.jsdelivr.net/gh/jscastro76/threebox@v.2.2.2/dist/threebox.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/gh/jscastro76/threebox@v.2.2.2/dist/threebox.min.js"></script>
+
+<div id="map"></div>
+<div id="infoBox" class="infoBox"></div>
+
+<script>
+mapboxgl.accessToken =
+  "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyNGtyYmtvIn0.f8f_PAURro1hU-sh_xnAuA";
+
+const map = new mapboxgl.Map({
+  container: "map",
+  style: "mapbox://styles/mapbox/satellite-v9",
+
+  center: { lng: -87.43715249608606, lat: 20.30514220104367 },
+  zoom: 15.4,
+  pitch: 64.9,
+  bearing: 172.5,
+  antialias: true,
+
+  prefetchZoomDelta: 3,
+  maxTileCacheSize: 1024,
+  fadeDuration: 0
+});
+
+/* THREEBOX */
+const tb = (window.tb = new Threebox(
+  map,
+  map.getCanvas().getContext("webgl"),
+  { defaultLights: false }
+));
+
+map.on("style.load", () => {
+
+  map.addLayer({
+    id: "custom-threebox-model",
+    type: "custom",
+    renderingMode: "3d",
+
+    onAdd: function () {
+
+      /* Lighting */
+      tb.world.add(new THREE.AmbientLight(0xffffff, 60));
+      tb.world.add(new THREE.HemisphereLight(0xffffff, 0x555555, 60));
+
+      const sun = new THREE.DirectionalLight(0xffffff, 120);
+      sun.position.set(0, 500, 1200);
+      tb.world.add(sun);
+
+      const fill = new THREE.DirectionalLight(0xffffff, 80);
+      fill.position.set(-300, 300, -300);
+      tb.world.add(fill);
+
+      /* LOAD GLB */
+      const options = {
+        obj: "https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/VENDIBLES.glb",
+        type: "gltf",
+        scale: { x: 1, y: 1, z: 1 },
+        units: "meters",
+        rotation: { x: 90, y: -90, z: 0 }
+      };
+
+      tb.loadObj(options, (model) => {
+        model.setCoords([-87.43715249608606, 20.30514220104367]);
+        model.setRotation({ x: 0, y: 0, z: 270 });
+        tb.add(model);
+
+        let selectedObject = null;
+        let originalMaterial = null;
+
+        map.on("click", (e) => {
+          const intersects = tb.queryRenderedFeatures(e.point);
+          const infoBox = document.getElementById("infoBox");
+
+          if (intersects.length === 0) {
+            if (selectedObject) selectedObject.material = originalMaterial;
+            selectedObject = null;
+            infoBox.style.display = "none";
+            return;
+          }
+
+          const obj = intersects[0].object;
+
+          if (selectedObject && selectedObject !== obj) {
+            selectedObject.material = originalMaterial;
+          }
+
+          selectedObject = obj;
+          originalMaterial = obj.material;
+
+          obj.material = obj.material.clone();
+          obj.material.color.set("#00ff00");
+
+          let infoText = "";
+          let found = false;
+
+          function addData(data) {
+            for (const [key, value] of Object.entries(data)) {
+              infoText += `<b>${key}:</b> ${value}<br>`;
+            }
+          }
+
+          if (obj.userData && Object.keys(obj.userData).length > 0) {
+            addData(obj.userData);
+            found = true;
+          }
+
+          if (obj.userData && obj.userData.extras) {
+            addData(obj.userData.extras);
+            found = true;
+          }
+
+          if (obj.extras && Object.keys(obj.extras).length > 0) {
+            addData(obj.extras);
+            found = true;
+          }
+
+          if (!found) infoText = "No metadata found.";
+
+          /* Logos */
+          infoText += `
+            <img class="infoLogoBig"
+                 src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
+
+            <div class="smallLogoContainer">
+                <img class="smallLogo left"
+                     src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/logo-ama.png">
+
+                <img class="smallLogo right"
+                     src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/civis.png">
+            </div>
+          `;
+
+          infoBox.innerHTML = infoText;
+          infoBox.style.display = "block";
+        });
+      });
+    },
+
+    render: function () {
+      tb.update();
+    }
+  });
+});
+</script>
+
+</body>
+</html>
