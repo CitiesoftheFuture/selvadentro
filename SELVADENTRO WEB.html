@@ -167,14 +167,14 @@ map.on("style.load", () => {
 
     onAdd: function () {
       // Lighting
-      tb.world.add(new THREE.AmbientLight(0xffffff, 60));
-      tb.world.add(new THREE.HemisphereLight(0xffffff, 0x555555, 60));
+      tb.world.add(new THREE.AmbientLight(0xffffff, 20));
+      tb.world.add(new THREE.HemisphereLight(0xffffff, 0x555555, 20));
 
-      const sun = new THREE.DirectionalLight(0xffffff, 120);
+      const sun = new THREE.DirectionalLight(0xffffff, 80);
       sun.position.set(0, 500, 1200);
       tb.world.add(sun);
 
-      const fill = new THREE.DirectionalLight(0xffffff, 80);
+      const fill = new THREE.DirectionalLight(0xffffff, 60);
       fill.position.set(-300, 300, -300);
       tb.world.add(fill);
 
@@ -294,6 +294,7 @@ map.once("pitchstart", fadeSplash);
 
 </body>
 </html>
+
 
 
 
