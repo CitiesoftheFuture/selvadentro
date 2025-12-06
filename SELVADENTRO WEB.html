@@ -127,7 +127,7 @@ const map = new mapboxgl.Map({
 });
 
 // HUD Control
-let showHUD = true;
+let showHUD = false;
 function updateHUD() {
   const hud = document.getElementById("hud");
   if (!showHUD) { hud.style.display = "none"; return; }
@@ -230,7 +230,7 @@ map.on("style.load", () => {
           metadataGrid.innerHTML = "";
 
           if (Object.keys(allData).length === 0) {
-            metadataGrid.innerHTML = `<div class="no-data">No information available for this element</div>`;
+            metadataGrid.innerHTML = `<div class="no-data">...</div>`;
           } else {
             for (const [key, value] of Object.entries(allData)) {
               const div = document.createElement("div");
@@ -261,6 +261,7 @@ function fadeSplash() {
 </script>
 </body>
 </html>
+
 
 
 
