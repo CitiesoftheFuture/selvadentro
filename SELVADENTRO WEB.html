@@ -2,281 +2,254 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>3D Model Metadata Viewer (Threebox + Mapbox)</title>
+<title>SelvaDentro 3D - Smart Metadata + Status Colors</title>
 <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
-
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.js"></script>
-
 <style>
   body { margin: 0; padding: 0; }
   #map { position: absolute; top: 0; bottom: 0; width: 100%; }
 
-  .infoBox {
+  /* Responsive Info Panel */
+  #infoBox {
     position: absolute;
-    top: 30px;
-    left: 40px;
     background: rgb(67,81,63);
     color: white;
-    padding: 30px 30px;
-    border-radius: 30px;
+    padding: 24px;
+    border-radius: 24px;
     font-family: Arial, sans-serif;
-    font-size: 24px;
-    max-width: 220px;
-    line-height: 1.5;
-    display: none;
-    box-shadow: 0px 6px 22px rgba(0,0,0,0.25);
-  }
-
-  .infoBox b {
-    font-size: 20px; 
-    display: block; 
-    margin-top: 10px;
-  }
-
-  .infoLogoBig {
-    width: 100%;
-    display: block;
-    margin: 20px auto 0 auto;
-  }
-
-  .smallLogoContainer {
-    position: relative;
-    width: 100%;
-    height: 30px;
-    margin-top: 10px;
-  }
-
-  .smallLogo {
-    position: absolute;
-    width: 25%;
-  }
-
-  .smallLogo.left {
-    left: calc(50% - 25% - 50px);
-  }
-
-  .smallLogo.right {
-    left: calc(50% + 50px);
-  }
-
-  /* HUD for zoom, pitch, bearing */
-  #hud {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    background: rgba(67,81,63,0.85);
-    color: white;
-    padding: 10px 15px;
-    border-radius: 12px;
-    font-family: Arial, sans-serif;
-    font-size: 16px;
-    line-height: 1.4;
-    z-index: 999;
-  }
-
-  /* Splash floating logo - 50% bigger */
-  #splashLogo {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 450px; /* 50% bigger than before */
-    opacity: 1;
+    box-shadow: 0px 8px 30px rgba(0,0,0,0.4);
     z-index: 1000;
-    transition: opacity 3s ease;
-    pointer-events: none;
+    max-width: 90%;
+    width: 380px;
+    box-sizing: border-box;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+  }
+  #infoBox.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+
+  @media (min-width: 768px) {
+    #infoBox { top: 30px; left: 40px; max-width: 420px; }
+  }
+  @media (max-width: 767px) {
+    #infoBox {
+      left: 50%; bottom: 20px; transform: translateX(-50%) translateY(100%);
+      width: 96%; border-radius: 24px 24px 0 0; padding: 28px 20px 32px;
+    }
+    #infoBox.visible { transform: translateX(-50%) translateY(0); }
+  }
+
+  .metadata-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 20px;
+    margin-bottom: 20px;
+    font-size: 15px;
+  }
+  @media (max-width: 767px) { .metadata-grid { font-size: 16px; } }
+  .metadata-grid b {
+    font-size: 13px; display: block; opacity: 0.9; margin-bottom: 2px;
+  }
+
+  .no-data {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: 17px;
+    padding: 20px 0;
+    opacity: 0.9;
+    font-style: italic;
+  }
+
+  .infoLogoBig { width: 70%; max-width: 280px; display: block; margin: 24px auto 16px; }
+  .smallLogoContainer { display: flex; justify-content: center; gap: 40px; margin-top: 10px; }
+  .smallLogo { height: 42px; width: auto; }
+
+  #hud {
+    position: absolute; bottom: 20px; left: 20px;
+    background: rgba(67,81,63,0.95); color: white; padding: 12px 18px;
+    border-radius: 12px; font-family: Arial, sans-serif; font-size: 16px;
+    line-height: 1.5; z-index: 999; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+
+  #splashLogo {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 450px; opacity: 1; z-index: 1000; transition: opacity 3s ease; pointer-events: none;
   }
 </style>
 </head>
-
 <body>
 
-<!-- THREEBOX -->
 <link href="https://cdn.jsdelivr.net/gh/jscastro76/threebox@v.2.2.2/dist/threebox.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/gh/jscastro76/threebox@v.2.2.2/dist/threebox.min.js"></script>
 
 <div id="map"></div>
-<div id="infoBox" class="infoBox"></div>
+
+<div id="infoBox">
+  <div class="metadata-grid" id="metadataGrid"></div>
+  <img class="infoLogoBig" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
+  <div class="smallLogoContainer">
+    <img class="smallLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/logo-ama.png">
+    <img class="smallLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/civis.png">
+  </div>
+</div>
+
 <div id="hud">
   <div>Zoom: <span id="zoomVal"></span></div>
   <div>Pitch: <span id="pitchVal"></span></div>
   <div>Bearing: <span id="bearingVal"></span></div>
+  <div>Lng: <span id="lngVal"></span></div>
+  <div>Lat: <span id="latVal"></span></div>
 </div>
 
-<img id="splashLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png" alt="SelvaDentro Logo">
+<img id="splashLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
 
 <script>
-mapboxgl.accessToken =
-  "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyNGtyYmtvIn0.f8f_PAURro1hU-sh_xnAuA";
+mapboxgl.accessToken = "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyNGtyYmtvIn0.f8f_PAURro1hU-sh_xnAuA";
 
-// Responsive initial camera
 function getInitialCamera() {
-  const width = window.innerWidth;
-  if (width > 1200) {
-    return { center: { lng:  -87.414264, lat: 20.295873 }, zoom: 14.84, pitch: 69, bearing: 90 };
-  } else if (width > 768) {
-    return { center: { lng: -87.42448, lat: 20.29626 }, zoom: 14, pitch: 69, bearing: 90 };
-  } else {
-    return { center: { lng: -87.424915, lat: 20.289472 }, zoom: 15.33, pitch: 69, bearing: 180 };
-  }
+  const w = window.innerWidth;
+  if (w > 1200) return { center: { lng: -87.82448, lat: 20.27606 }, zoom: 14.84, pitch: 69, bearing: 90 };
+  if (w > 768)  return { center: { lng: -87.42448, lat: 20.29626 }, zoom: 14,    pitch: 69, bearing: 90 };
+  return                { center: { lng: -87.4347,  lat: 20.28239 }, zoom: 14.73, pitch: 69, bearing: 180 };
 }
-
-const initialCamera = getInitialCamera();
 
 const map = new mapboxgl.Map({
   container: "map",
   style: "mapbox://styles/mapbox/satellite-v9",
-  center: initialCamera.center,
-  zoom: initialCamera.zoom,
-  pitch: initialCamera.pitch,
-  bearing: initialCamera.bearing,
+  center: getInitialCamera().center,
+  zoom: getInitialCamera().zoom,
+  pitch: getInitialCamera().pitch,
+  bearing: getInitialCamera().bearing,
   antialias: true,
-  prefetchZoomDelta: 3,
-  maxTileCacheSize: 1024,
   fadeDuration: 0
 });
 
-// HUD
-const zoomEl = document.getElementById("zoomVal");
-const pitchEl = document.getElementById("pitchVal");
-const bearingEl = document.getElementById("bearingVal");
-
+// HUD Control
+let showHUD = true;
 function updateHUD() {
-  zoomEl.textContent = map.getZoom().toFixed(2);
-  pitchEl.textContent = map.getPitch().toFixed(2);
-  bearingEl.textContent = map.getBearing().toFixed(2);
+  const hud = document.getElementById("hud");
+  if (!showHUD) { hud.style.display = "none"; return; }
+  hud.style.display = "block";
+  const c = map.getCenter();
+  document.getElementById("zoomVal").textContent = map.getZoom().toFixed(2);
+  document.getElementById("pitchVal").textContent = map.getPitch().toFixed(1);
+  document.getElementById("bearingVal").textContent = map.getBearing().toFixed(1);
+  document.getElementById("lngVal").textContent = c.lng.toFixed(6);
+  document.getElementById("latVal").textContent = c.lat.toFixed(6);
 }
+map.on("move", updateHUD); updateHUD();
 
-map.on("move", updateHUD);
-updateHUD(); // initial values
-
-// THREEBOX
-const tb = (window.tb = new Threebox(
-  map,
-  map.getCanvas().getContext("webgl"),
-  { defaultLights: false }
-));
+// Threebox + Model
+const tb = window.tb = new Threebox(map, map.getCanvas().getContext("webgl"), { defaultLights: false });
 
 map.on("style.load", () => {
-
   map.addLayer({
     id: "custom-threebox-model",
     type: "custom",
     renderingMode: "3d",
-
     onAdd: function () {
-      // Lighting
+      // Lights
       tb.world.add(new THREE.AmbientLight(0xffffff, 20));
       tb.world.add(new THREE.HemisphereLight(0xffffff, 0x555555, 20));
+      const sun = new THREE.DirectionalLight(0xffffff, 80); sun.position.set(0, 500, 1200); tb.world.add(sun);
+      const fill = new THREE.DirectionalLight(0xffffff, 60); fill.position.set(-300, 300, -300); tb.world.add(fill);
 
-      const sun = new THREE.DirectionalLight(0xffffff, 80);
-      sun.position.set(0, 500, 1200);
-      tb.world.add(sun);
-
-      const fill = new THREE.DirectionalLight(0xffffff, 60);
-      fill.position.set(-300, 300, -300);
-      tb.world.add(fill);
-
-      // Load GLB
-      const options = {
+      tb.loadObj({
         obj: "https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVA3D.glb",
         type: "gltf",
-        scale: { x: 1, y: 1, z: 1 },
+        scale: 1,
         units: "meters",
         rotation: { x: 90, y: -90, z: 0 }
-      };
-
-      tb.loadObj(options, (model) => {
+      }, (model) => {
         model.setCoords([-87.43715249608606, 20.30514220104367]);
         model.setRotation({ x: 0, y: 0, z: 270 });
         tb.add(model);
 
+        const infoBox = document.getElementById("infoBox");
+        const metadataGrid = document.getElementById("metadataGrid");
         let selectedObject = null;
         let originalMaterial = null;
 
+        // Status → Color
+        const statusColors = {
+          "disponible": "#00ff00",
+          "apartado": "#FFD700",
+          "reservado": "#FFD700",
+          "vendido": "#ff0000",
+          "sold": "#ff0000"
+        };
+
         map.on("click", (e) => {
           const intersects = tb.queryRenderedFeatures(e.point);
-          const infoBox = document.getElementById("infoBox");
 
-          if (intersects.length === 0) {
-            if (selectedObject) selectedObject.material = originalMaterial;
+          // Reset previous selection
+          if (selectedObject) {
+            selectedObject.material = originalMaterial;
             selectedObject = null;
-            infoBox.style.display = "none";
-            return;
           }
+          infoBox.classList.remove("visible");
+
+          if (intersects.length === 0) return;
 
           const obj = intersects[0].object;
-
-          if (selectedObject && selectedObject !== obj) {
-            selectedObject.material = originalMaterial;
-          }
-
           selectedObject = obj;
           originalMaterial = obj.material;
 
-          // Make gold with emissive highlight
-          obj.material = obj.material.clone();
-          obj.material.color.set("#FFD700"); // GOLD color
-          obj.material.emissive = new THREE.Color("#FFD700");
-          obj.material.emissiveIntensity = 0.4;
+          // Extract all metadata
+          const userData = obj.userData || {};
+          const extras = userData.extras || {};
+          const allData = { ...userData, ...extras };
 
-          let infoText = "";
-          let found = false;
-
-          function addData(data) {
-            for (const [key, value] of Object.entries(data)) {
-              infoText += `<b>${key}:</b> ${value}<br>`;
+          // Find status for coloring
+          let status = "";
+          for (const [key, value] of Object.entries(allData)) {
+            if (key.toLowerCase().includes("status") || key.toLowerCase().includes("estado")) {
+              status = value.toString().toLowerCase().trim();
+              break;
             }
           }
 
-          if (obj.userData && Object.keys(obj.userData).length > 0) {
-            addData(obj.userData);
-            found = true;
+          // Choose highlight color
+          let color = "#4488ff"; // default
+          for (const [key, col] of Object.entries(statusColors)) {
+            if (status.includes(key)) {
+              color = col;
+              break;
+            }
           }
 
-          if (obj.userData && obj.userData.extras) {
-            addData(obj.userData.extras);
-            found = true;
+          // Apply highlight
+          obj.material = obj.material.clone();
+          obj.material.color.set(color);
+          obj.material.emissive = new THREE.Color(color);
+          obj.material.emissiveIntensity = 0.5;
+
+          // Populate metadata panel
+          metadataGrid.innerHTML = "";
+
+          if (Object.keys(allData).length === 0) {
+            metadataGrid.innerHTML = `<div class="no-data">No information available for this element</div>`;
+          } else {
+            for (const [key, value] of Object.entries(allData)) {
+              const div = document.createElement("div");
+              div.innerHTML = `<b>${key}</b>${value}`;
+              metadataGrid.appendChild(div);
+            }
           }
 
-          if (obj.extras && Object.keys(obj.extras).length > 0) {
-            addData(obj.extras);
-            found = true;
-          }
-
-          if (!found) infoText = "No metadata found.";
-
-          // Logos
-          infoText += `
-            <img class="infoLogoBig"
-                 src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
-
-            <div class="smallLogoContainer">
-                <img class="smallLogo left"
-                     src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/logo-ama.png">
-
-                <img class="smallLogo right"
-                     src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/civis.png">
-            </div>
-          `;
-
-          infoBox.innerHTML = infoText;
-          infoBox.style.display = "block";
+          infoBox.classList.add("visible");
         });
       });
     },
-
-    render: function () {
-      tb.update();
-    }
+    render: () => tb.update()
   });
 });
 
-// Splash logo fade out on first user interaction
+// Splash logo fade
 let splashFaded = false;
 const splashLogo = document.getElementById("splashLogo");
-
 function fadeSplash() {
   if (!splashFaded) {
     splashFaded = true;
@@ -284,24 +257,7 @@ function fadeSplash() {
     setTimeout(() => splashLogo.remove(), 3000);
   }
 }
-
-// Listen for first user interaction
-map.once("zoomstart", fadeSplash);
-map.once("dragstart", fadeSplash);
-map.once("rotatestart", fadeSplash);
-map.once("pitchstart", fadeSplash);
+["zoomstart","dragstart","rotatestart","pitchstart"].forEach(ev => map.once(ev, fadeSplash));
 </script>
-
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
