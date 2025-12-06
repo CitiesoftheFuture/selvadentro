@@ -18,7 +18,7 @@
     padding: 24px;
     border-radius: 24px;
     font-family: Arial, sans-serif;
-    box-shadow: 0px 8px 30px rgba(0,0,0,0.4);
+    box-shadow: 0px 8px 30px rgba(0,0,0,0.8);
     z-index: 1000;
     max-width: 90%;
     width: 380px;
@@ -28,7 +28,7 @@
     visibility: hidden;
     transform: translateY(20px);
   }
-  #infoBox.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+  #infoBox.visible { opacity: .98; visibility: visible; transform: translateY(0); }
 
   @media (min-width: 768px) {
     #infoBox { top: 30px; left: 40px; max-width: 420px; }
@@ -64,7 +64,7 @@
 
   .infoLogoBig { width: 70%; max-width: 280px; display: block; margin: 24px auto 16px; }
   .smallLogoContainer { display: flex; justify-content: center; gap: 40px; margin-top: 10px; }
-  .smallLogo { height: 42px; width: auto; }
+  .smallLogo { height: 25px; width: auto; }
 
   #hud {
     position: absolute; bottom: 20px; left: 20px;
@@ -110,8 +110,8 @@ mapboxgl.accessToken = "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyN
 
 function getInitialCamera() {
   const w = window.innerWidth;
-  if (w > 1200) return { center: { lng: -87.82448, lat: 20.27606 }, zoom: 14.84, pitch: 69, bearing: 90 };
-  if (w > 768)  return { center: { lng: -87.42448, lat: 20.29626 }, zoom: 14,    pitch: 69, bearing: 90 };
+  if (w > 1200) return { center: { lng: -87.404365, lat: 20.296410 }, zoom: 14.84, pitch: 69, bearing: 90 };
+  if (w > 768)  return { center: { lng: -87.404365, lat: 20.296410 }, zoom: 14.5,    pitch: 69, bearing: 90 };
   return                { center: { lng: -87.4347,  lat: 20.28239 }, zoom: 14.73, pitch: 69, bearing: 180 };
 }
 
@@ -254,10 +254,11 @@ function fadeSplash() {
   if (!splashFaded) {
     splashFaded = true;
     splashLogo.style.opacity = 0;
-    setTimeout(() => splashLogo.remove(), 3000);
+    setTimeout(() => splashLogo.remove(), 4000);
   }
 }
 ["zoomstart","dragstart","rotatestart","pitchstart"].forEach(ev => map.once(ev, fadeSplash));
 </script>
 </body>
 </html>
+
