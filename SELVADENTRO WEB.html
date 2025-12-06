@@ -110,7 +110,7 @@ mapboxgl.accessToken = "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyN
 
 function getInitialCamera() {
   const w = window.innerWidth;
-  if (w > 1200) return { center: { lng: -87.421729, lat: 20.296090 }, zoom: 14.84, pitch: 69, bearing: 90 };
+  if (w > 1200) return { center: { lng: -87.421729, lat: 20.296090 }, zoom: 14.44, pitch: 69, bearing: 90 };
   if (w > 768)  return { center: { lng: -87.421729, lat: 20.296090 }, zoom: 14.5,    pitch: 69, bearing: 90 };
   return                { center: { lng: -87.421729,  lat: 20.296090 }, zoom: 14.73, pitch: 69, bearing: 180 };
 }
@@ -127,7 +127,7 @@ const map = new mapboxgl.Map({
 });
 
 // HUD Control
-let showHUD = false;
+let showHUD = true;
 function updateHUD() {
   const hud = document.getElementById("hud");
   if (!showHUD) { hud.style.display = "none"; return; }
@@ -261,6 +261,7 @@ function fadeSplash() {
 </script>
 </body>
 </html>
+
 
 
 
