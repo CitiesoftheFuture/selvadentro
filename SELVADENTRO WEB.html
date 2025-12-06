@@ -127,7 +127,7 @@ const map = new mapboxgl.Map({
 });
 
 // HUD Control
-let showHUD = true;
+let showHUD = false;
 function updateHUD() {
   const hud = document.getElementById("hud");
   if (!showHUD) { hud.style.display = "none"; return; }
@@ -261,6 +261,7 @@ function fadeSplash() {
 </script>
 </body>
 </html>
+
 
 
 
