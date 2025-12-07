@@ -6,76 +6,104 @@
 <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.js"></script>
+
 <style>
   body { margin: 0; padding: 0; }
   #map { position: absolute; top: 0; bottom: 0; width: 100%; }
 
-  /* Responsive Info Panel */
+  /* ============================
+     INFO PANEL
+  ============================ */
   #infoBox {
     position: absolute;
     background: rgb(67,81,63);
     color: white;
-    padding: 24px;
-    border-radius: 24px;
+    padding: 28px;
+    border-radius: 26px;
     font-family: Arial Black, sans-serif;
     box-shadow: 0px 8px 30px rgba(0,0,0,0.8);
     z-index: 1000;
     max-width: 90%;
     width: 380px;
     box-sizing: border-box;
-    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: all 0.35s ease;
     opacity: 0;
     visibility: hidden;
     transform: translateY(20px);
   }
   #infoBox.visible { opacity: .98; visibility: visible; transform: translateY(0); }
 
+  /* Desktop position */
   @media (min-width: 768px) {
     #infoBox { top: 30px; left: 40px; max-width: 420px; }
   }
+
+  /* MOBILE: bottom sheet */
   @media (max-width: 767px) {
     #infoBox {
-      left: 50%; bottom: 20px; transform: translateX(-50%) translateY(100%);
-      width: 96%; border-radius: 24px 24px 0 0; padding: 28px 20px 32px;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%) translateY(100%);
+      width: 100%;
+      max-height: 25vh;
+      padding: 24px 20px;
+      border-radius: 22px 22px 0 0;
+      overflow-y: auto;
+      backdrop-filter: blur(4px);
     }
     #infoBox.visible { transform: translateX(-50%) translateY(0); }
   }
 
-  .metadata-grid {
+  /* ============================
+     METADATA LAYOUT (3 rows)
+  ============================ */
+  .metadata-block { margin-bottom: 22px; text-align: center; }
+
+  .label { font-size: 15px; opacity: 0.85; margin-bottom: 4px; font-weight: normal; }
+  .value { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+
+  .two-col {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px 20px;
-    margin-bottom: 20px;
-    font-size: 15px;
-  }
-  @media (max-width: 767px) { .metadata-grid { font-size: 16px; } }
-  .metadata-grid b {
-    font-size: 13px; display: block; opacity: 0.9; margin-bottom: 2px;
+    gap: 12px 24px;
+    margin-top: 10px;
+    margin-bottom: 25px;
   }
 
-  .no-data {
-    grid-column: 1 / -1;
-    text-align: center;
-    font-size: 17px;
-    padding: 20px 0;
-    opacity: 0.9;
-    font-style: italic;
+  .pair { text-align: center; }
+
+  /* ============================
+     LOGOS
+  ============================ */
+  .infoLogoBig {
+    width: 70%;
+    max-width: 260px;
+    display: block;
+    margin: 40px auto 18px;
+    opacity: 0.95;
   }
 
-  .infoLogoBig { width: 70%; max-width: 280px; display: block; margin: 24px auto 16px; }
-  .smallLogoContainer { display: flex; justify-content: center; gap: 40px; margin-top: 10px; }
-  .smallLogo { height: 25px; width: auto; }
+  .smallLogoContainer {
+    display: flex;
+    justify-content: center;
+    gap: 36px;
+    margin-top: 20px;
+  }
+  .smallLogo { height: 26px; width: auto; opacity: 0.9; }
 
+  /* HUD */
   #hud {
     position: absolute; bottom: 20px; left: 20px;
     background: rgba(67,81,63,0.95); color: white; padding: 12px 18px;
     border-radius: 12px; font-family: Arial, sans-serif; font-size: 16px;
-    line-height: 1.5; z-index: 999; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    line-height: 1.5; z-index: 999;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   }
 
   #splashLogo {
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    width: 450px; opacity: 1; z-index: 1000; transition: opacity 3s ease; pointer-events: none;
+    width: 450px; opacity: 1; z-index: 1000;
+    transition: opacity 3s ease; pointer-events: none;
   }
 </style>
 </head>
@@ -86,15 +114,33 @@
 
 <div id="map"></div>
 
+<!-- ============================
+     INFO PANEL CONTENT
+============================ -->
 <div id="infoBox">
-  <div class="metadata-grid" id="metadataGrid"></div>
-  <img class="infoLogoBig" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
+  <div id="metaIndex" class="metadata-block"></div>
+
+  <div class="two-col">
+    <div id="metaArea" class="pair"></div>
+    <div id="metaConst" class="pair"></div>
+  </div>
+
+  <div class="two-col">
+    <div id="metaPrice" class="pair"></div>
+    <div id="metaStatus" class="pair"></div>
+  </div>
+
+  <img class="infoLogoBig"
+       src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
+
   <div class="smallLogoContainer">
     <img class="smallLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/logo-ama.png">
     <img class="smallLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/civis.png">
   </div>
 </div>
 
+
+<!-- HUD -->
 <div id="hud">
   <div>Zoom: <span id="zoomVal"></span></div>
   <div>Pitch: <span id="pitchVal"></span></div>
@@ -103,7 +149,8 @@
   <div>Lat: <span id="latVal"></span></div>
 </div>
 
-<img id="splashLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
+<img id="splashLogo"
+     src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
 
 <script>
 mapboxgl.accessToken = "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyNGtyYmtvIn0.f8f_PAURro1hU-sh_xnAuA";
@@ -126,12 +173,8 @@ const map = new mapboxgl.Map({
   fadeDuration: 0
 });
 
-// HUD Control
-let showHUD = true;
+/* HUD */
 function updateHUD() {
-  const hud = document.getElementById("hud");
-  if (!showHUD) { hud.style.display = "none"; return; }
-  hud.style.display = "block";
   const c = map.getCenter();
   document.getElementById("zoomVal").textContent = map.getZoom().toFixed(2);
   document.getElementById("pitchVal").textContent = map.getPitch().toFixed(1);
@@ -139,22 +182,28 @@ function updateHUD() {
   document.getElementById("lngVal").textContent = c.lng.toFixed(6);
   document.getElementById("latVal").textContent = c.lat.toFixed(6);
 }
-map.on("move", updateHUD); updateHUD();
+map.on("move", updateHUD);
 
-// Threebox + Model
 const tb = window.tb = new Threebox(map, map.getCanvas().getContext("webgl"), { defaultLights: false });
 
 map.on("style.load", () => {
+
   map.addLayer({
     id: "custom-threebox-model",
     type: "custom",
     renderingMode: "3d",
+
     onAdd: function () {
-      // Lights
       tb.world.add(new THREE.AmbientLight(0xffffff, 20));
       tb.world.add(new THREE.HemisphereLight(0xffffff, 0x555555, 20));
-      const sun = new THREE.DirectionalLight(0xffffff, 80); sun.position.set(0, 500, 1200); tb.world.add(sun);
-      const fill = new THREE.DirectionalLight(0xffffff, 60); fill.position.set(-300, 300, -300); tb.world.add(fill);
+
+      const sun = new THREE.DirectionalLight(0xffffff, 80);
+      sun.position.set(0, 500, 1200);
+      tb.world.add(sun);
+
+      const fill = new THREE.DirectionalLight(0xffffff, 60);
+      fill.position.set(-300, 300, -300);
+      tb.world.add(fill);
 
       tb.loadObj({
         obj: "https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVA3D.glb",
@@ -163,16 +212,22 @@ map.on("style.load", () => {
         units: "meters",
         rotation: { x: 90, y: -90, z: 0 }
       }, (model) => {
+
         model.setCoords([-87.43715249608606, 20.30514220104367]);
         model.setRotation({ x: 0, y: 0, z: 270 });
         tb.add(model);
 
         const infoBox = document.getElementById("infoBox");
-        const metadataGrid = document.getElementById("metadataGrid");
+
+        const fIndex = document.getElementById("metaIndex");
+        const fArea  = document.getElementById("metaArea");
+        const fConst = document.getElementById("metaConst");
+        const fPrice = document.getElementById("metaPrice");
+        const fStatus = document.getElementById("metaStatus");
+
         let selectedObject = null;
         let originalMaterial = null;
 
-        // Status → Color
         const statusColors = {
           "disponible": "#00ff00",
           "apartado": "#FFD700",
@@ -182,92 +237,69 @@ map.on("style.load", () => {
         };
 
         map.on("click", (e) => {
-          const intersects = tb.queryRenderedFeatures(e.point);
+          const hits = tb.queryRenderedFeatures(e.point);
 
-          // Reset previous selection
           if (selectedObject) {
             selectedObject.material = originalMaterial;
             selectedObject = null;
           }
+
           infoBox.classList.remove("visible");
 
-          if (intersects.length === 0) return;
+          if (hits.length === 0) return;
 
-          const obj = intersects[0].object;
+          const obj = hits[0].object;
           selectedObject = obj;
           originalMaterial = obj.material;
 
-          // Extract all metadata
-          const userData = obj.userData || {};
-          const extras = userData.extras || {};
-          const allData = { ...userData, ...extras };
+          const d = { ...(obj.userData || {}), ...(obj.userData?.extras || {}) };
 
-          // Find status for coloring
-          let status = "";
-          for (const [key, value] of Object.entries(allData)) {
-            if (key.toLowerCase().includes("status") || key.toLowerCase().includes("estado")) {
-              status = value.toString().toLowerCase().trim();
-              break;
-            }
+          const Index  = d["Index"] || "";
+          const Area   = d["Area"] || "";
+          const Const  = d["Construible"] || "";
+          const Price  = d["Precio"] || "";
+          const Status = (d["Status"] || "").toString().toLowerCase();
+
+          /* HIGHLIGHT COLOR */
+          let color = "#4488ff";
+          for (const [k, col] of Object.entries(statusColors)) {
+            if (Status.includes(k)) { color = col; break; }
           }
 
-          // Choose highlight color
-          let color = "#4488ff"; // default
-          for (const [key, col] of Object.entries(statusColors)) {
-            if (status.includes(key)) {
-              color = col;
-              break;
-            }
-          }
-
-          // Apply highlight
           obj.material = obj.material.clone();
           obj.material.color.set(color);
           obj.material.emissive = new THREE.Color(color);
           obj.material.emissiveIntensity = 0.5;
 
-          // Populate metadata panel
-          metadataGrid.innerHTML = "";
-
-          if (Object.keys(allData).length === 0) {
-            metadataGrid.innerHTML = `<div class="no-data">...</div>`;
-          } else {
-            for (const [key, value] of Object.entries(allData)) {
-              const div = document.createElement("div");
-              div.innerHTML = `<b>${key}</b>${value}`;
-              metadataGrid.appendChild(div);
-            }
-          }
+          /* FILL PANEL */
+          fIndex.innerHTML  = `<div class="label">Index</div><div class="value">${Index}</div>`;
+          fArea.innerHTML   = `<div class="label">Area</div><div class="value">${Area}</div>`;
+          fConst.innerHTML  = `<div class="label">Construible</div><div class="value">${Const}</div>`;
+          fPrice.innerHTML  = `<div class="label">Precio</div><div class="value">$ ${Price}</div>`;
+          fStatus.innerHTML = `<div class="label">Status</div><div class="value" style="color:${color}">${Status}</div>`;
 
           infoBox.classList.add("visible");
         });
+
       });
     },
+
     render: () => tb.update()
   });
 });
 
-// Splash logo fade
+/* Splash fade */
 let splashFaded = false;
 const splashLogo = document.getElementById("splashLogo");
+
 function fadeSplash() {
   if (!splashFaded) {
     splashFaded = true;
     splashLogo.style.opacity = 0;
-    setTimeout(() => splashLogo.remove(), 4000);
+    setTimeout(() => splashLogo.remove(), 3500);
   }
 }
-["zoomstart","dragstart","rotatestart","pitchstart"].forEach(ev => map.once(ev, fadeSplash));
+["zoomstart", "dragstart", "rotatestart", "pitchstart"].forEach(ev => map.once(ev, fadeSplash));
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
