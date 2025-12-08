@@ -38,11 +38,11 @@
     #infoBox { top: 30px; left: 40px; max-width: 420px; }
   }
 
-  /* MOBILE: bottom sheet */
+  /* MOBILE: bottom sheet, raised higher (extra -30px) */
   @media (max-width: 767px) {
     #infoBox {
       left: 50%;
-      bottom: 0;
+      bottom: 30px; /* Increased by +30px */
       transform: translateX(-50%) translateY(100%);
       width: 100%;
       max-height: 25vh;
@@ -51,7 +51,9 @@
       overflow-y: auto;
       backdrop-filter: blur(4px);
     }
-    #infoBox.visible { transform: translateX(-50%) translateY(0); }
+    #infoBox.visible {
+      transform: translateX(-50%) translateY(-30px); /* Lift visible box */
+    }
   }
 
   /* ============================
@@ -91,13 +93,14 @@
   }
   .smallLogo { height: 26px; width: auto; opacity: 0.9; }
 
-  /* HUD */
+  /* HUD — hidden by default */
   #hud {
     position: absolute; bottom: 20px; left: 20px;
     background: rgba(67,81,63,0.95); color: white; padding: 12px 18px;
     border-radius: 12px; font-family: Arial, sans-serif; font-size: 16px;
     line-height: 1.5; z-index: 999;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    display: none;   /* <<< HUD IS NOW HIDDEN BY DEFAULT */
   }
 
   #splashLogo {
@@ -140,7 +143,7 @@
 </div>
 
 
-<!-- HUD -->
+<!-- HUD (hidden) -->
 <div id="hud">
   <div>Zoom: <span id="zoomVal"></span></div>
   <div>Pitch: <span id="pitchVal"></span></div>
@@ -159,7 +162,7 @@ function getInitialCamera() {
   const w = window.innerWidth;
   if (w > 1200) return { center: { lng: -87.421729, lat: 20.296090 }, zoom: 14.44, pitch: 69, bearing: 90 };
   if (w > 768)  return { center: { lng: -87.421729, lat: 20.296090 }, zoom: 14.5,    pitch: 69, bearing: 90 };
-  return                { center: { lng: -87.434052,  lat: 20.285553 }, zoom: 14.13, pitch: 69, bearing: 180 };
+  return                { center: { lng: -87.434052,  lat: 20.283556 }, zoom: 14.14, pitch: 69, bearing: 180 };
 }
 
 const map = new mapboxgl.Map({
@@ -173,7 +176,7 @@ const map = new mapboxgl.Map({
   fadeDuration: 0
 });
 
-/* HUD */
+/* HUD Updating (even if hidden) */
 function updateHUD() {
   const c = map.getCenter();
   document.getElementById("zoomVal").textContent = map.getZoom().toFixed(2);
@@ -303,6 +306,3 @@ function fadeSplash() {
 </script>
 </body>
 </html>
-
-
-
