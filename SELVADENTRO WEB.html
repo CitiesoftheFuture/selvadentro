@@ -197,14 +197,14 @@ map.on("style.load", () => {
     renderingMode: "3d",
 
     onAdd: function () {
-      tb.world.add(new THREE.AmbientLight(0xffffff, 20));
-      tb.world.add(new THREE.HemisphereLight(0xffffff, 0x555555, 20));
+      tb.world.add(new THREE.AmbientLight(0xffffff, 15));
+      tb.world.add(new THREE.HemisphereLight(0xffffff, 0x555555, 15));
 
-      const sun = new THREE.DirectionalLight(0xffffff, 80);
+      const sun = new THREE.DirectionalLight(0xffffff, 50);
       sun.position.set(0, 500, 1200);
       tb.world.add(sun);
 
-      const fill = new THREE.DirectionalLight(0xffffff, 60);
+      const fill = new THREE.DirectionalLight(0xffffff, 50);
       fill.position.set(-300, 300, -300);
       tb.world.add(fill);
 
@@ -306,5 +306,6 @@ function fadeSplash() {
 </script>
 </body>
 </html>
+
 
 
