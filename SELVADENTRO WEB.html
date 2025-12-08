@@ -45,7 +45,7 @@
       bottom: 0px; /* Increased by +30px */
       transform: translateX(-50%) translateY(100%);
       width: 100%;
-      max-height: 35vh;
+      max-height: 40vh;
       padding: 24px 20px;
       border-radius: 22px 22px 0 0;
       overflow-y: auto;
@@ -93,20 +93,33 @@
   }
   .smallLogo { height: 26px; width: auto; opacity: 0.9; }
 
-  /* HUD — hidden by default */
+  /* HUD — hidden by default, toggled via JS */
   #hud {
     position: absolute; bottom: 20px; left: 20px;
     background: rgba(67,81,63,0.95); color: white; padding: 12px 18px;
     border-radius: 12px; font-family: Arial, sans-serif; font-size: 16px;
     line-height: 1.5; z-index: 999;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    display: none;   /* <<< HUD IS NOW HIDDEN BY DEFAULT */
+    display: none;
   }
 
+  /* splash logo (desktop default) */
   #splashLogo {
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
     width: 450px; opacity: 1; z-index: 1000;
     transition: opacity 3s ease; pointer-events: none;
+  }
+
+  /* MOBILE adjustments: move splash to 65% of the screen and make 20% smaller */
+  @media (max-width: 767px) {
+    #splashLogo {
+      top: 42% !important;                  /* move down to 65% of viewport height */
+      width: calc(450px * 0.8) !important;  /* 20% smaller: 450 * 0.8 = 360px */
+      transform: translate(-50%, -50%) !important;
+      left: 50% !important;
+    }
+
+    /* optionally ensure info box is on bottom (already handled above) */
   }
 </style>
 </head>
@@ -143,7 +156,7 @@
 </div>
 
 
-<!-- HUD (hidden) -->
+<!-- HUD (toggleable) -->
 <div id="hud">
   <div>Zoom: <span id="zoomVal"></span></div>
   <div>Pitch: <span id="pitchVal"></span></div>
@@ -157,6 +170,14 @@
 
 <script>
 mapboxgl.accessToken = "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyNGtyYmtvIn0.f8f_PAURro1hU-sh_xnAuA";
+
+const SHOW_HUD = true;  // <<<<<< TURN HUD ON/OFF HERE
+
+// show HUD if flag is true
+if (SHOW_HUD) {
+  const hudEl = document.getElementById("hud");
+  if (hudEl) hudEl.style.display = "block";
+}
 
 function getInitialCamera() {
   const w = window.innerWidth;
@@ -179,11 +200,14 @@ const map = new mapboxgl.Map({
 /* HUD Updating (even if hidden) */
 function updateHUD() {
   const c = map.getCenter();
-  document.getElementById("zoomVal").textContent = map.getZoom().toFixed(2);
-  document.getElementById("pitchVal").textContent = map.getPitch().toFixed(1);
-  document.getElementById("bearingVal").textContent = map.getBearing().toFixed(1);
-  document.getElementById("lngVal").textContent = c.lng.toFixed(6);
-  document.getElementById("latVal").textContent = c.lat.toFixed(6);
+  const z = map.getZoom();
+  const p = map.getPitch();
+  const b = map.getBearing();
+  document.getElementById("zoomVal").textContent = (z !== undefined) ? z.toFixed(2) : "";
+  document.getElementById("pitchVal").textContent = (p !== undefined) ? p.toFixed(1) : "";
+  document.getElementById("bearingVal").textContent = (b !== undefined) ? b.toFixed(1) : "";
+  document.getElementById("lngVal").textContent = (c.lng !== undefined) ? c.lng.toFixed(6) : "";
+  document.getElementById("latVal").textContent = (c.lat !== undefined) ? c.lat.toFixed(6) : "";
 }
 map.on("move", updateHUD);
 
@@ -306,7 +330,3 @@ function fadeSplash() {
 </script>
 </body>
 </html>
-
-
-
-
