@@ -2,125 +2,34 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>SelvaDentro 3D - Smart Metadata + Status Colors</title>
+<title>SelvaDentro 3D - Sombras Perfectas Entre Volúmenes</title>
 <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.js"></script>
-
 <style>
   body { margin: 0; padding: 0; }
   #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-
-  /* ============================
-     INFO PANEL
-  ============================ */
-  #infoBox {
-    position: absolute;
-    background: rgb(67,81,63);
-    color: white;
-    padding: 28px;
-    border-radius: 26px;
-    font-family: Arial Black, sans-serif;
-    box-shadow: 0px 8px 30px rgba(0,0,0,0.8);
-    z-index: 1000;
-    max-width: 90%;
-    width: 380px;
-    box-sizing: border-box;
-    transition: all 0.35s ease;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(20px);
-  }
+  #infoBox { position: absolute; background: rgb(67,81,63); color: white; padding: 28px; border-radius: 26px;
+    font-family: Arial Black, sans-serif; box-shadow: 0px 8px 30px rgba(0,0,0,0.8); z-index: 1000;
+    max-width: 90%; width: 380px; box-sizing: border-box; transition: all 0.35s ease;
+    opacity: 0; visibility: hidden; transform: translateY(20px); }
   #infoBox.visible { opacity: .98; visibility: visible; transform: translateY(0); }
-
-  /* Desktop position */
-  @media (min-width: 768px) {
-    #infoBox { top: 30px; left: 40px; max-width: 420px; }
-  }
-
-  /* MOBILE: bottom sheet, raised higher (extra -30px) */
+  @media (min-width: 768px) { #infoBox { top: 30px; left: 40px; max-width: 420px; } }
   @media (max-width: 767px) {
-    #infoBox {
-      left: 50%;
-      bottom: 0px; /* Increased by +30px */
-      transform: translateX(-50%) translateY(100%);
-      width: 100%;
-      max-height: 40vh;
-      padding: 24px 20px;
-      border-radius: 22px 22px 0 0;
-      overflow-y: auto;
-      backdrop-filter: blur(4px);
-    }
-    #infoBox.visible {
-      transform: translateX(-50%) translateY(-30px); /* Lift visible box */
-    }
+    #infoBox { left: 50%; bottom: 0; transform: translateX(-50%) translateY(100%); width: 100%; max-height: 40vh;
+      padding: 24px 20px; border-radius: 22px 22px 0 0; overflow-y: auto; backdrop-filter: blur(4px); }
+    #infoBox.visible { transform: translateX(-50%) translateY(-30px); }
   }
-
-  /* ============================
-     METADATA LAYOUT (3 rows)
-  ============================ */
   .metadata-block { margin-bottom: 22px; text-align: center; }
-
-  .label { font-size: 15px; opacity: 0.85; margin-bottom: 4px; font-weight: normal; }
-  .value { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
-
-  .two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px 24px;
-    margin-top: 10px;
-    margin-bottom: 25px;
-  }
-
+  .label { font-size: 15px; opacity: 0.85; margin-bottom: 4px; }
+  .value { font-size: 20px; font-weight: bold; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; margin: 10px 0 25px; }
   .pair { text-align: center; }
-
-  /* ============================
-     LOGOS
-  ============================ */
-  .infoLogoBig {
-    width: 70%;
-    max-width: 260px;
-    display: block;
-    margin: 40px auto 18px;
-    opacity: 0.95;
-  }
-
-  .smallLogoContainer {
-    display: flex;
-    justify-content: center;
-    gap: 36px;
-    margin-top: 20px;
-  }
-  .smallLogo { height: 26px; width: auto; opacity: 0.9; }
-
-  /* HUD — hidden by default, toggled via JS */
-  #hud {
-    position: absolute; bottom: 20px; left: 20px;
-    background: rgba(67,81,63,0.95); color: white; padding: 12px 18px;
-    border-radius: 12px; font-family: Arial, sans-serif; font-size: 16px;
-    line-height: 1.5; z-index: 999;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    display: none;
-  }
-
-  /* splash logo (desktop default) */
-  #splashLogo {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    width: 450px; opacity: 1; z-index: 1000;
-    transition: opacity 3s ease; pointer-events: none;
-  }
-
-  /* MOBILE adjustments: move splash to 65% of the screen and make 20% smaller */
-  @media (max-width: 767px) {
-    #splashLogo {
-      top: 42% !important;                  /* move down to 65% of viewport height */
-      width: calc(450px * 0.8) !important;  /* 20% smaller: 450 * 0.8 = 360px */
-      transform: translate(-50%, -50%) !important;
-      left: 50% !important;
-    }
-
-    /* optionally ensure info box is on bottom (already handled above) */
-  }
+  .infoLogoBig { width: 70%; max-width: 260px; display: block; margin: 40px auto 18px; opacity: 0.95; }
+  .smallLogoContainer { display: flex; justify-content: center; gap: 36px; margin-top: 20px; }
+  .smallLogo { height: 26px; opacity: 0.9; }
+  #splashLogo { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 450px; opacity: 1; z-index: 1000; transition: opacity 3s ease; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -130,60 +39,39 @@
 
 <div id="map"></div>
 
-<!-- ============================
-     INFO PANEL CONTENT
-============================ -->
 <div id="infoBox">
   <div id="metaIndex" class="metadata-block"></div>
-
   <div class="two-col">
     <div id="metaArea" class="pair"></div>
     <div id="metaConst" class="pair"></div>
   </div>
-
   <div class="two-col">
     <div id="metaPrice" class="pair"></div>
     <div id="metaStatus" class="pair"></div>
   </div>
-
-  <img class="infoLogoBig"
-       src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
-
+  <img class="infoLogoBig" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
   <div class="smallLogoContainer">
     <img class="smallLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/logo-ama.png">
     <img class="smallLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/civis.png">
   </div>
 </div>
 
-
-<!-- HUD (toggleable) -->
-<div id="hud">
-  <div>Zoom: <span id="zoomVal"></span></div>
-  <div>Pitch: <span id="pitchVal"></span></div>
-  <div>Bearing: <span id="bearingVal"></span></div>
-  <div>Lng: <span id="lngVal"></span></div>
-  <div>Lat: <span id="latVal"></span></div>
-</div>
-
-<img id="splashLogo"
-     src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
+<img id="splashLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
 
 <script>
 mapboxgl.accessToken = "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyNGtyYmtvIn0.f8f_PAURro1hU-sh_xnAuA";
 
-const SHOW_HUD = true;  // <<<<<< TURN HUD ON/OFF HERE
-
-// show HUD if flag is true
-if (SHOW_HUD) {
-  const hudEl = document.getElementById("hud");
-  if (hudEl) hudEl.style.display = "block";
-}
+// AJUSTES FÁCILES
+const LUZ_SOL         = 0.76;    // 20% menos que antes
+const LUZ_HEMI        = 0.32;
+const LUZ_AMBIENTE    = 0.03;    // casi nada
+const BRILLO_MATERIAL = 1.35;
 
 function getInitialCamera() {
   const w = window.innerWidth;
   if (w > 1200) return { center: { lng: -87.421729, lat: 20.296090 }, zoom: 14.44, pitch: 69, bearing: 90 };
-  if (w > 768)  return { center: { lng: -87.421729, lat: 20.296090 }, zoom: 14.5,    pitch: 69, bearing: 90 };
-  return                { center: { lng: -87.434816,  lat: 20.281730 }, zoom: 14.14, pitch: 69, bearing: 180 };
+  if (w > 768)  return { center: { lng: -87.421729, lat: 20.296090 }, zoom: 14.5,  pitch: 69, bearing: 90 };
+  return { center: { lng: -87.434816, lat: 20.281730 }, zoom: 14.14, pitch: 69, bearing: 180 };
 }
 
 const map = new mapboxgl.Map({
@@ -197,41 +85,54 @@ const map = new mapboxgl.Map({
   fadeDuration: 0
 });
 
-/* HUD Updating (even if hidden) */
-function updateHUD() {
-  const c = map.getCenter();
-  const z = map.getZoom();
-  const p = map.getPitch();
-  const b = map.getBearing();
-  document.getElementById("zoomVal").textContent = (z !== undefined) ? z.toFixed(2) : "";
-  document.getElementById("pitchVal").textContent = (p !== undefined) ? p.toFixed(1) : "";
-  document.getElementById("bearingVal").textContent = (b !== undefined) ? b.toFixed(1) : "";
-  document.getElementById("lngVal").textContent = (c.lng !== undefined) ? c.lng.toFixed(6) : "";
-  document.getElementById("latVal").textContent = (c.lat !== undefined) ? c.lat.toFixed(6) : "";
-}
-map.on("move", updateHUD);
-
 const tb = window.tb = new Threebox(map, map.getCanvas().getContext("webgl"), { defaultLights: false });
 
 map.on("style.load", () => {
-
   map.addLayer({
     id: "custom-threebox-model",
     type: "custom",
     renderingMode: "3d",
-
     onAdd: function () {
-      tb.world.add(new THREE.AmbientLight(0xffffff, 15));
-      tb.world.add(new THREE.HemisphereLight(0xffffff, 0x555555, 15));
 
-      const sun = new THREE.DirectionalLight(0xffffff, 50);
-      sun.position.set(0, 500, 1200);
+      // Limpiar luces
+      tb.world.children = tb.world.children.filter(child => !child.isLight);
+
+      // Hemisférica muy tenue
+      const hemi = new THREE.HemisphereLight(0xffffff, 0x88aa88, LUZ_HEMI);
+      tb.world.add(hemi);
+
+      // Sol bajo y lejano → sombras largas y definidas
+      const sun = new THREE.DirectionalLight(0xffffff, LUZ_SOL);
+      sun.position.set(1400, 1800, 1600);
+      sun.castShadow = true;
+      sun.shadow.mapSize.width = 4096;
+      sun.shadow.mapSize.height = 4096;
+      sun.shadow.camera.left   = -1600;
+      sun.shadow.camera.right  = 1600;
+      sun.shadow.camera.top    = 1600;
+      sun.shadow.camera.bottom = -1600;
+      sun.shadow.camera.near   = 1;
+      sun.shadow.camera.far    = 5500;
+      sun.shadow.bias = -0.00004;
+      sun.shadow.normalBias = 0.1;
       tb.world.add(sun);
 
-      const fill = new THREE.DirectionalLight(0xffffff, 50);
-      fill.position.set(-300, 300, -300);
-      tb.world.add(fill);
+      // Ambiente casi cero
+      const ambient = new THREE.AmbientLight(0xffffff, LUZ_AMBIENTE);
+      tb.world.add(ambient);
 
+      // ESTO ES LO QUE HACÍA FALTA: que el mapa reciba sombras
+      map.getCanvas().style.background = "#000000";
+      map.getLayer("background") && map.removeLayer("background");
+
+      // Forzar que el terreno reciba sombras (truco esencial)
+      map.addLayer({
+        id: "ground-shadow-receiver",
+        type: "background",
+        paint: { "background-color": "#000000" }
+      }, "waterway-label");
+
+      // Cargar modelo
       tb.loadObj({
         obj: "https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVA3D.glb",
         type: "gltf",
@@ -239,17 +140,34 @@ map.on("style.load", () => {
         units: "meters",
         rotation: { x: 90, y: -90, z: 0 }
       }, (model) => {
-
         model.setCoords([-87.43715249608606, 20.30514220104367]);
         model.setRotation({ x: 0, y: 0, z: 270 });
+
+        model.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+
+            if (child.material) {
+              child.material = child.material.clone();
+              child.material.color.multiplyScalar(BRILLO_MATERIAL);
+              child.material.metalness = 0.02;
+              child.material.roughness = 0.85;
+              child.material.emissive.setHex(0x000000);
+              child.material.normalScale = new THREE.Vector2(0.9, 0.9);
+              child.material.needsUpdate = true;
+            }
+          }
+        });
+
         tb.add(model);
 
+        // CLIC PERFECTO
         const infoBox = document.getElementById("infoBox");
-
-        const fIndex = document.getElementById("metaIndex");
-        const fArea  = document.getElementById("metaArea");
-        const fConst = document.getElementById("metaConst");
-        const fPrice = document.getElementById("metaPrice");
+        const fIndex  = document.getElementById("metaIndex");
+        const fArea   = document.getElementById("metaArea");
+        const fConst  = document.getElementById("metaConst");
+        const fPrice  = document.getElementById("metaPrice");
         const fStatus = document.getElementById("metaStatus");
 
         let selectedObject = null;
@@ -265,14 +183,11 @@ map.on("style.load", () => {
 
         map.on("click", (e) => {
           const hits = tb.queryRenderedFeatures(e.point);
-
-          if (selectedObject) {
+          if (selectedObject && originalMaterial) {
             selectedObject.material = originalMaterial;
             selectedObject = null;
           }
-
           infoBox.classList.remove("visible");
-
           if (hits.length === 0) return;
 
           const obj = hits[0].object;
@@ -280,14 +195,12 @@ map.on("style.load", () => {
           originalMaterial = obj.material;
 
           const d = { ...(obj.userData || {}), ...(obj.userData?.extras || {}) };
-
-          const Index  = d["Index"] || "";
-          const Area   = d["Area"] || "";
-          const Const  = d["Construible"] || "";
-          const Price  = d["Precio"] || "";
+          const Index = d["Index"] || "—";
+          const Area  = d["Area"] || "—";
+          const Const = d["Construible"] || "—";
+          const Price = d["Precio"] || "—";
           const Status = (d["Status"] || "").toString().toLowerCase();
 
-          /* HIGHLIGHT COLOR */
           let color = "#4488ff";
           for (const [k, col] of Object.entries(statusColors)) {
             if (Status.includes(k)) { color = col; break; }
@@ -296,37 +209,28 @@ map.on("style.load", () => {
           obj.material = obj.material.clone();
           obj.material.color.set(color);
           obj.material.emissive = new THREE.Color(color);
-          obj.material.emissiveIntensity = 0.7;
+          obj.material.emissiveIntensity = 1.0;
 
-          /* FILL PANEL */
-          fIndex.innerHTML  = `<div class="label">Index</div><div class="value">${Index}</div>`;
-          fArea.innerHTML   = `<div class="label">Area</div><div class="value">${Area}</div>`;
+          fIndex.innerHTML  = `<div class="label">Lote</div><div class="value">${Index}</div>`;
+          fArea.innerHTML   = `<div class="label">Área</div><div class="value">${Area}</div>`;
           fConst.innerHTML  = `<div class="label">Construible</div><div class="value">${Const}</div>`;
           fPrice.innerHTML  = `<div class="label">Precio</div><div class="value">$ ${Price}</div>`;
-          fStatus.innerHTML = `<div class="label">Status</div><div class="value" style="color:${color}">${Status}</div>`;
+          fStatus.innerHTML = `<div class="label">Status</div><div class="value" style="color:${color}">${Status.toUpperCase()}</div>`;
 
           infoBox.classList.add("visible");
         });
-
       });
     },
-
     render: () => tb.update()
   });
 });
 
-/* Splash fade */
+// Fade splash
 let splashFaded = false;
 const splashLogo = document.getElementById("splashLogo");
-
-function fadeSplash() {
-  if (!splashFaded) {
-    splashFaded = true;
-    splashLogo.style.opacity = 0;
-    setTimeout(() => splashLogo.remove(), 3500);
-  }
-}
-["zoomstart", "dragstart", "rotatestart", "pitchstart"].forEach(ev => map.once(ev, fadeSplash));
+["zoomstart","dragstart","rotatestart","pitchstart"].forEach(ev => map.once(ev, () => {
+  if (!splashFaded) { splashFaded = true; splashLogo.style.opacity = 0; setTimeout(() => splashLogo.remove(), 3500); }
+}));
 </script>
 </body>
 </html>
