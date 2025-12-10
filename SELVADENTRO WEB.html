@@ -7,58 +7,59 @@
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.js"></script>
 <style>
-  body { margin: 0; padding: 0; }
-  #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+  body{margin:0;padding:0;background:#000}
+  #map{position:absolute;top:0;bottom:0;width:100%}
 
-  /* PANEL DE INFO - IZQUIERDA EN ESCRITORIO/IPAD, ABAJO EN MÓVIL */
-  #infoBox {
-    position: absolute; background: rgb(67,81,63); color: white; padding: 24px; border-radius: 24px;
-    font-family: Arial Black, sans-serif; box-shadow: 0 10px 40px rgba(0,0,0,0.7); z-index: 1000;
-    max-width: 90%; width: 380px; box-sizing: border-box; transition: all 0.35s ease;
-    opacity: 0; visibility: hidden; transform: translateY(20px);
+  /* PANEL METADATA */
+  #infoBox{
+    position:absolute;background:rgb(67,81,63);color:white;padding:28px;border-radius:26px;
+    font-family:Arial Black,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,0.7);z-index:1000;
+    max-width:90%;width:380px;box-sizing:border-box;transition:all .35s ease;
+    opacity:0;visibility:hidden;transform:translateY(20px);
   }
-  #infoBox.visible { opacity: .98; visibility: visible; transform: translateY(0); }
+  #infoBox.visible{opacity:.98;visibility:visible;transform:translateY(0)}
 
-  /* ESCRITORIO + IPAD: izquierda superior */
-  @media (min-width: 768px) {
-    #infoBox { top: 30px; left: 30px; }
-  }
-
-  /* MÓVIL: bottom sheet */
-  @media (max-width: 767px) {
-    #infoBox {
-      left: 50%; bottom: 0; transform: translateX(-50%) translateY(100%);
-      width: 100%; max-height: 52vh; padding: 20px; border-radius: 22px 22px 0 0;
-    }
-    #infoBox.visible { transform: translateX(-50%) translateY(-20px); }
+  @media(min-width:768px){#infoBox{top:30px;left:30px}}
+  @media(max-width:767px){
+    #infoBox{left:50%;bottom:0;transform:translateX(-50%) translateY(100%);width:100%;max-height:48vh;padding:24px 20px;border-radius:22px 22px 0 0}
+    #infoBox.visible{transform:translateX(-50%) translateY(-15px)}
   }
 
-  .metadata-block { margin-bottom: 18px; text-align: center; }
-  .label { font-size: 14px; opacity: 0.9; margin-bottom: 4px; }
-  .value { font-size: 19px; font-weight: bold; }
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; margin: 10px 0 20px; }
-  .pair { text-align: center; }
+  .metadata-block{margin-bottom:22px;text-align:center}
+  .label{font-size:15px;opacity:.85;margin-bottom:4px}
+  .value{font-size:20px;font-weight:bold}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;margin:10px 0 25px}
+  .pair{text-align:center}
 
-  .infoLogoBig { width: 65%; max-width: 220px; display: block; margin: 30px auto 15px; opacity: 0.95; }
-  .smallLogoContainer { display: flex; justify-content: center; gap: 30px; margin-top: 15px; }
-  .smallLogo { height: 24px; opacity: 0.9; }
+  .infoLogoBig{width:70%;max-width:260px;display:block;margin:40px auto 18px;opacity:.95}
+  .smallLogoContainer{display:flex;justify-content:center;gap:36px;margin-top:20px}
+  .smallLogo{height:26px;opacity:.9}
 
-  /* BOTÓN STATUS - INFERIOR IZQUIERDA */
-  #statusButton {
-    position: fixed; bottom: 20px; left: 20px; z-index: 2000;
-    padding: 14px 32px; background: transparent; color: white;
-    font-weight: bold; font-size: 15px; border: 2px solid white; border-radius: 30px;
-    cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-    transition: all 0.3s ease; backdrop-filter: blur(8px);
+  /* BOTÓN STATUS - CENTRADO EN ESCRITORIO/TABLET, ARRIBA EN MÓVIL */
+  #statusButton{
+    position:fixed;z-index:2000;
+    padding:14px 36px;background:transparent;color:white;
+    font-weight:bold;font-size:16px;border:2px solid white;border-radius:30px;
+    cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.5);
+    transition:all .3s ease;backdrop-filter:blur(12px);
   }
-  #statusButton:hover { background: rgba(255,255,255,0.15); }
-  #statusButton.active { background: white; color: black; }
+  #statusButton:hover{background:rgba(255,255,255,0.15)}
+  #statusButton.active{background:white;color:black}
 
-  #splashLogo {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-    width: 420px; opacity: 1; z-index: 1000; pointer-events: none; transition: opacity 2.5s ease;
+  @media(min-width:768px){
+    #statusButton{bottom:40px;left:50%;transform:translateX(-50%)}
   }
-  @media (max-width: 767px) { #splashLogo { width: 280px; top: 45%; } }
+  @media(max-width:767px){
+    #statusButton{top:20px;left:50%;transform:translateX(-50%)}
+  }
+
+  /* SPLASH LOGO - VISIBLE EN TODOS LOS DISPOSITIVOS */
+  #splashLogo{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:420px;max-width:90vw;z-index:1500;pointer-events:none;
+    opacity:1;transition:opacity 2.5s ease;
+  }
+  @media(max-width:767px){#splashLogo{width:300px}}
 </style>
 </head>
 <body>
@@ -89,194 +90,196 @@
   </div>
 </div>
 
+<!-- SPLASH LOGO CON FADE OUT -->
 <img id="splashLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
 
 <script>
 mapboxgl.accessToken = "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyNGtyYmtvIn0.f8f_PAURro1hU-sh_xnAuA";
 
-function getInitialCamera() {
-  const w = window.innerWidth;
-  if (w > 1200) return { center: { lng: -87.421729, lat: 20.296090 }, zoom: 14.44, pitch: 69, bearing: 90 };
-  if (w > 768)  return { center: { lng: -87.421729, lat: 20.296090 }, zoom: 14.5,  pitch: 69, bearing: 90 };
-  return { center: { lng: -87.434816, lat: 20.281730 }, zoom: 14.14, pitch: 69, bearing: 180 };
+function getInitialCamera(){
+  const w=window.innerWidth;
+  if(w>1200)return{center:{lng:-87.421729,lat:20.296090},zoom:14.44,pitch:69,bearing:90};
+  if(w>768)return{center:{lng:-87.421729,lat:20.296090},zoom:14.5,pitch:69,bearing:90};
+  return{center:{lng:-87.434816,lat:20.281730},zoom:14.14,pitch:69,bearing:180};
 }
 
-const map = new mapboxgl.Map({
-  container: "map",
-  style: "mapbox://styles/mapbox/satellite-v9",
-  center: getInitialCamera().center,
-  zoom: getInitialCamera().zoom,
-  pitch: getInitialCamera().pitch,
-  bearing: getInitialCamera().bearing,
-  antialias: true,
-  fadeDuration: 0
+const map=new mapboxgl.Map({
+  container:"map",
+  style:"mapbox://styles/mapbox/satellite-v9",
+  center:getInitialCamera().center,
+  zoom:getInitialCamera().zoom,
+  pitch:getInitialCamera().pitch,
+  bearing:getInitialCamera().bearing,
+  antialias:true,
+  fadeDuration:0
 });
 
-const tb = window.tb = new Threebox(map, map.getCanvas().getContext("webgl"), { defaultLights: false });
-let currentGlowLight = null;
-let statusMode = false;
-let originalMaterials = new WeakMap();
-let modelRef = null;
+const tb=window.tb=new Threebox(map,map.getCanvas().getContext("webgl"),{defaultLights:false});
+let currentGlowLight=null;
+let statusMode=false;
+let originalMaterials=new WeakMap();
+let modelRef=null;
 
-map.on("style.load", () => {
-  map.setPaintProperty('satellite', 'raster-opacity', 0.75);
-  map.setPaintProperty('satellite', 'raster-brightness-min', 0.15);
+map.on("style.load",()=>{
+
+  map.setPaintProperty('satellite','raster-opacity',0.68);
+  map.setPaintProperty('satellite','raster-brightness-min',0.08);
 
   map.addLayer({
-    id: "custom-threebox-model",
-    type: "custom",
-    renderingMode: "3d",
-    onAdd: function () {
+    id:"custom-threebox-model",
+    type:"custom",
+    renderingMode:"3d",
+    onAdd:function(){
 
-      const shadowReceiver = new THREE.Mesh(
-        new THREE.PlaneGeometry(10000, 10000),
-        new THREE.ShadowMaterial({ opacity: 0.9, color: 0x000000 })
+      const shadowPlane=new THREE.Mesh(
+        new THREE.PlaneGeometry(15000,15000),
+        new THREE.ShadowMaterial({opacity:0.95,color:0x000000})
       );
-      shadowReceiver.rotation.x = -Math.PI / 2;
-      shadowReceiver.position.y = 2.0;
-      shadowReceiver.receiveShadow = true;
-      tb.world.add(shadowReceiver);
+      shadowPlane.rotation.x=-Math.PI/2;
+      shadowPlane.position.y=3.8;
+      shadowPlane.receiveShadow=true;
+      tb.world.add(shadowPlane);
 
-      tb.world.children = tb.world.children.filter(child => !child.isLight);
-      const hemi = new THREE.HemisphereLight(0xffffff, 0x88aa88, 0.35);
-      tb.world.add(hemi);
-      const sun = new THREE.DirectionalLight(0xffffff, 0.7);
-      sun.position.set(1600, 2200, 1800);
-      sun.castShadow = true;
-      sun.shadow.mapSize.width = 4096;
-      sun.shadow.mapSize.height = 4096;
-      sun.shadow.camera.left = sun.shadow.camera.bottom = -2200;
-      sun.shadow.camera.right = sun.shadow.camera.top = 2200;
-      sun.shadow.camera.near = 1;
-      sun.shadow.camera.far = 8000;
-      sun.shadow.bias = -0.0001;
-      sun.shadow.normalBias = 0.15;
+      tb.world.children=tb.world.children.filter(c=>!c.isLight);
+      tb.world.add(new THREE.HemisphereLight(0xffffff,0x88aa88,0.35));
+
+      const sun=new THREE.DirectionalLight(0xffffff,0.95);
+      sun.position.set(1800,3000,2200);
+      sun.castShadow=true;
+      sun.shadow.mapSize.width=4096;
+      sun.shadow.mapSize.height=4096;
+      sun.shadow.camera.left=sun.shadow.camera.bottom=-2800;
+      sun.shadow.camera.right=sun.shadow.camera.top=2800;
+      sun.shadow.camera.near=1;
+      sun.shadow.camera.far=10000;
+      sun.shadow.bias=-0.00008;
+      sun.shadow.normalBias=0.2;
       tb.world.add(sun);
-      const ambient = new THREE.AmbientLight(0xffffff, 0.02);
-      tb.world.add(ambient);
+
+      tb.world.add(new THREE.AmbientLight(0xffffff,0.01));
 
       tb.loadObj({
-        obj: "https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVA3D.glb",
-        type: "gltf",
-        scale: 1,
-        units: "meters",
-        rotation: { x: 90, y: -90, z: 0 }
-      }, (model) => {
-        model.setCoords([-87.43715249608606, 20.30514220104367]);
-        model.setRotation({ x: 0, y: 0, z: 270 });
-        modelRef = model;
+        obj:"https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVA3D.glb",
+        type:"gltf",
+        scale:1,
+        units:"meters",
+        rotation:{x:90,y:-90,z:0}
+      },(model)=>{
+        model.setCoords([-87.43715249608606,20.30514220104367]);
+        model.setRotation({x:0,y:0,z:270});
+        modelRef=model;
 
-        model.traverse((child) => {
-          if (child.isMesh && child.material) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-            child.material = child.material.clone();
+        model.traverse((child)=>{
+          if(child.isMesh&&child.material){
+            child.castShadow=true;
+            child.receiveShadow=true;
+            child.material=child.material.clone();
             child.material.color.multiplyScalar(1.35);
-            child.material.metalness = 0.02;
-            child.material.roughness = 0.85;
-            child.material.needsUpdate = true;
-            originalMaterials.set(child, child.material.clone());
+            child.material.metalness=0.02;
+            child.material.roughness=0.85;
+            child.material.needsUpdate=true;
+            originalMaterials.set(child,child.material.clone());
           }
         });
 
         tb.add(model);
 
-        const statusButton = document.getElementById("statusButton");
+        const statusButton=document.getElementById("statusButton");
 
-        function applyStatusColors(enable) {
-          statusMode = enable;
-          statusButton.textContent = statusMode ? "OCULTAR STATUS" : "MOSTRAR STATUS";
-          statusButton.classList.toggle("active", statusMode);
+        function applyStatusColors(enable){
+          statusMode=enable;
+          statusButton.textContent=statusMode?"OCULTAR STATUS":"MOSTRAR STATUS";
+          statusButton.classList.toggle("active",statusMode);
 
-          model.traverse((child) => {
-            if (child.isMesh && child.userData?.Status) {
-              const s = child.userData.Status.toString().toLowerCase();
-              let color = "#ffffff";
-              if (s.includes("disponible")) color = "#00ff00";
-              else if (s.includes("reserv") || s.includes("apartado")) color = "#FFD700";
-              else if (s.includes("vendido") || s.includes("sold")) color = "#ff0000";
+          model.traverse((child)=>{
+            if(child.isMesh&&child.userData?.Status){
+              const s=child.userData.Status.toString().toLowerCase();
+              let color="#ffffff";
+              if(s.includes("disponible"))color="#00ff00";
+              else if(s.includes("reserv")||s.includes("apartado"))color="#FFD700";
+              else if(s.includes("vendido")||s.includes("sold"))color="#ff0000";
 
-              child.material = child.material.clone();
-              if (statusMode) {
+              child.material=child.material.clone();
+              if(statusMode){
                 child.material.color.set(color);
-                child.material.emissive = new THREE.Color(color);
-                child.material.emissiveIntensity = 0.4;
+                child.material.emissive=new THREE.Color(color);
+                child.material.emissiveIntensity=0.4;
                 child.material.color.multiplyScalar(0.5);
-              } else {
-                child.material = originalMaterials.get(child).clone();
+              }else{
+                child.material=originalMaterials.get(child).clone();
               }
-              child.material.needsUpdate = true;
+              child.material.needsUpdate=true;
             }
           });
         }
 
-        statusButton.onclick = () => applyStatusColors(!statusMode);
+        statusButton.onclick=()=>applyStatusColors(!statusMode);
 
-        let selectedObject = null;
-        let originalMaterial = null;
+        let selectedObject=null;
+        let originalMaterial=null;
 
-        map.on("click", (e) => {
-          const hits = tb.queryRenderedFeatures(e.point);
-          if (currentGlowLight) { tb.remove(currentGlowLight); currentGlowLight = null; }
-          if (selectedObject && originalMaterial) {
-            selectedObject.material = originalMaterial;
-            selectedObject = null;
-          }
+        map.on("click",(e)=>{
+          const hits=tb.queryRenderedFeatures(e.point);
+          if(currentGlowLight){tb.remove(currentGlowLight);currentGlowLight=null;}
+          if(selectedObject&&originalMaterial){selectedObject.material=originalMaterial;selectedObject=null;}
           document.getElementById("infoBox").classList.remove("visible");
-          if (!hits.length) return;
+          if(!hits.length)return;
 
-          // DESACTIVAR STATUS AL SELECCIONAR LOTE
-          if (statusMode) applyStatusColors(false);
+          if(statusMode)applyStatusColors(false);
 
-          const obj = hits[0].object;
-          selectedObject = obj;
-          originalMaterial = obj.material;
+          const obj=hits[0].object;
+          selectedObject=obj;
+          originalMaterial=obj.material;
 
-          const d = { ...(obj.userData || {}), ...(obj.userData?.extras || {}) };
-          const Lote = d["Index"] || "—";
-          const Area = d["Area"] || "—";
-          const Const = d["Construible"] || "—";
-          const Precio = d["Precio"] || "—";
-          const rawStatus = (d["Status"] || "").toString().toLowerCase();
+          const d={...(obj.userData||{}),...(obj.userData?.extras||{})};
+          const Lote=d["Index"]||"—";
+          const Area=d["Area"]||"—";
+          const Const=d["Construible"]||"—";
+          const Precio=d["Precio"]||"—";
+          const rawStatus=(d["Status"]||"").toString().toLowerCase();
 
-          let textoEstado = "DESCONOCIDO";
-          let color = "#4488ff";
-          if (rawStatus.includes("disponible")) { textoEstado = "DISPONIBLE"; color = "#00ff00"; }
-          else if (rawStatus.includes("reserv") || rawStatus.includes("apartado")) { textoEstado = "RESERVADO"; color = "#FFD700"; }
-          else if (rawStatus.includes("vendido") || rawStatus.includes("sold")) { textoEstado = "VENDIDO"; color = "#ff0000"; }
+          let textoEstado="DESCONOCIDO";
+          let color="#4488ff";
+          if(rawStatus.includes("disponible")){textoEstado="DISPONIBLE";color="#00ff00";}
+          else if(rawStatus.includes("reserv")||rawStatus.includes("apartado")){textoEstado="RESERVADO";color="#FFD700";}
+          else if(rawStatus.includes("vendido")||rawStatus.includes("sold")){textoEstado="VENDIDO";color="#ff0000";}
 
-          obj.material = obj.material.clone();
+          obj.material=obj.material.clone();
           obj.material.color.set(color);
-          obj.material.emissive = new THREE.Color(color);
-          obj.material.emissiveIntensity = 4.0;
-          obj.material.needsUpdate = true;
+          obj.material.emissive=new THREE.Color(color);
+          obj.material.emissiveIntensity=4.0;
+          obj.material.needsUpdate=true;
 
-          const glowLight = new THREE.PointLight(color, 10, 150, 2);
-          const pos = obj.getWorldPosition(new THREE.Vector3());
-          pos.y += 12;
-          glowLight.position.copy(pos);
-          tb.add(glowLight);
-          currentGlowLight = glowLight;
+          const glow=new THREE.PointLight(color,10,150,2);
+          const pos=obj.getWorldPosition(new THREE.Vector3());
+          pos.y+=12;
+          glow.position.copy(pos);
+          tb.add(glow);
+          currentGlowLight=glow;
 
-          document.getElementById("metaLote").innerHTML    = `<div class="label">LOTE</div><div class="value">${Lote}</div>`;
-          document.getElementById("metaArea").innerHTML    = `<div class="label">ÁREA</div><div class="value">${Area}</div>`;
-          document.getElementById("metaConst").innerHTML   = `<div class="label">CONSTRUIBLE</div><div class="value">${Const}</div>`;
-          document.getElementById("metaPrecio").innerHTML = `<div class="label">PRECIO</div><div class="value">$ ${Precio}</div>`;
-          document.getElementById("metaEstado").innerHTML = `<div class="label">ESTADO</div><div class="value" style="color:${color}">${textoEstado}</div>`;
+          document.getElementById("metaLote").innerHTML=`<div class="label">LOTE</div><div class="value">${Lote}</div>`;
+          document.getElementById("metaArea").innerHTML=`<div class="label">ÁREA</div><div class="value">${Area}</div>`;
+          document.getElementById("metaConst").innerHTML=`<div class="label">CONSTRUIBLE</div><div class="value">${Const}</div>`;
+          document.getElementById("metaPrecio").innerHTML=`<div class="label">PRECIO</div><div class="value">$ ${Precio}</div>`;
+          document.getElementById("metaEstado").innerHTML=`<div class="label">ESTADO</div><div class="value" style="color:${color}">${textoEstado}</div>`;
 
           document.getElementById("infoBox").classList.add("visible");
         });
       });
     },
-    render: () => tb.update()
+    render:()=>tb.update()
   });
 });
 
-// Fade logo
-let splashFaded = false;
-const splashLogo = document.getElementById("splashLogo");
-["zoomstart","dragstart","rotatestart","pitchstart","touchstart"].forEach(ev => map.once(ev, () => {
-  if (!splashFaded) { splashFaded = true; splashLogo.style.opacity = 0; setTimeout(() => splashLogo.remove(), 3000); }
+// SPLASH LOGO + FADE OUT EN TODOS LOS DISPOSITIVOS
+let splashFaded=false;
+const splashLogo=document.getElementById("splashLogo");
+["zoomstart","dragstart","rotatestart","pitchstart","touchstart","mousedown"].forEach(ev=>map.once(ev,()=>{
+  if(!splashFaded){
+    splashFaded=true;
+    splashLogo.style.opacity=0;
+    setTimeout(()=>splashLogo.remove(),3000);
+  }
 }));
 </script>
 </body>
