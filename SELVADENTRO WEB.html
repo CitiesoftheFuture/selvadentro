@@ -2,48 +2,63 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>SelvaDentro 3D - Funciona Perfecto en Móvil</title>
+<title>SelvaDentro 3D - FINAL DEFINITIVO</title>
 <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.js"></script>
 <style>
   body { margin: 0; padding: 0; }
   #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
+  /* PANEL DE INFO - IZQUIERDA EN ESCRITORIO/IPAD, ABAJO EN MÓVIL */
   #infoBox {
-    position: absolute; background: rgb(67,81,63); color: white; padding: 28px; border-radius: 26px;
-    font-family: Arial Black, sans-serif; box-shadow: 0px 8px 30px rgba(0,0,0,0.8); z-index: 1000;
+    position: absolute; background: rgb(67,81,63); color: white; padding: 24px; border-radius: 24px;
+    font-family: Arial Black, sans-serif; box-shadow: 0 10px 40px rgba(0,0,0,0.7); z-index: 1000;
     max-width: 90%; width: 380px; box-sizing: border-box; transition: all 0.35s ease;
     opacity: 0; visibility: hidden; transform: translateY(20px);
   }
   #infoBox.visible { opacity: .98; visibility: visible; transform: translateY(0); }
-  @media (min-width: 768px) { #infoBox { top: 30px; left: 40px; max-width: 420px; } }
+
+  /* ESCRITORIO + IPAD: izquierda superior */
+  @media (min-width: 768px) {
+    #infoBox { top: 30px; left: 30px; }
+  }
+
+  /* MÓVIL: bottom sheet */
   @media (max-width: 767px) {
     #infoBox {
       left: 50%; bottom: 0; transform: translateX(-50%) translateY(100%);
-      width: 100%; max-height: 45vh; padding: 24px 20px;
-      border-radius: 22px 22px 0 0; overflow-y: auto;
-      /* Quitamos backdrop-filter para evitar bugs de zoom en móvil */
+      width: 100%; max-height: 52vh; padding: 20px; border-radius: 22px 22px 0 0;
     }
-    #infoBox.visible { transform: translateX(-50%) translateY(-30px); }
+    #infoBox.visible { transform: translateX(-50%) translateY(-20px); }
   }
-  .metadata-block { margin-bottom: 22px; text-align: center; }
-  .label { font-size: 15px; opacity: 0.85; margin-bottom: 4px; }
-  .value { font-size: 20px; font-weight: bold; }
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; margin: 10px 0 25px; }
-  .pair { text-align: center; }
-  .infoLogoBig { width: 70%; max-width: 260px; display: block; margin: 40px auto 18px; opacity: 0.95; }
-  .smallLogoContainer { display: flex; justify-content: center; gap: 36px; margin-top: 20px; }
-  .smallLogo { height: 26px; opacity: 0.9; }
 
-  /* LOGO DE BIENVENIDA - Perfecto en móvil */
+  .metadata-block { margin-bottom: 18px; text-align: center; }
+  .label { font-size: 14px; opacity: 0.9; margin-bottom: 4px; }
+  .value { font-size: 19px; font-weight: bold; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; margin: 10px 0 20px; }
+  .pair { text-align: center; }
+
+  .infoLogoBig { width: 65%; max-width: 220px; display: block; margin: 30px auto 15px; opacity: 0.95; }
+  .smallLogoContainer { display: flex; justify-content: center; gap: 30px; margin-top: 15px; }
+  .smallLogo { height: 24px; opacity: 0.9; }
+
+  /* BOTÓN STATUS - INFERIOR IZQUIERDA */
+  #statusButton {
+    position: fixed; bottom: 20px; left: 20px; z-index: 2000;
+    padding: 14px 32px; background: transparent; color: white;
+    font-weight: bold; font-size: 15px; border: 2px solid white; border-radius: 30px;
+    cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    transition: all 0.3s ease; backdrop-filter: blur(8px);
+  }
+  #statusButton:hover { background: rgba(255,255,255,0.15); }
+  #statusButton.active { background: white; color: black; }
+
   #splashLogo {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    width: 420px; opacity: 1; z-index: 1000; pointer-events: none;
-    transition: opacity 2.5s ease;
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 420px; opacity: 1; z-index: 1000; pointer-events: none; transition: opacity 2.5s ease;
   }
-  @media (max-width: 767px) {
-    #splashLogo { width: 300px; top: 45%; }
-  }
+  @media (max-width: 767px) { #splashLogo { width: 280px; top: 45%; } }
 </style>
 </head>
 <body>
@@ -53,6 +68,10 @@
 
 <div id="map"></div>
 
+<!-- BOTÓN STATUS -->
+<button id="statusButton">MOSTRAR STATUS</button>
+
+<!-- PANEL METADATA -->
 <div id="infoBox">
   <div id="metaLote" class="metadata-block"></div>
   <div class="two-col">
@@ -75,8 +94,6 @@
 <script>
 mapboxgl.accessToken = "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyNGtyYmtvIn0.f8f_PAURro1hU-sh_xnAuA";
 
-const LUZ_SOL = 0.95; const LUZ_HEMI = 0.40; const LUZ_AMBIENTE = 0.04; const BRILLO_MATERIAL = 1.40;
-
 function getInitialCamera() {
   const w = window.innerWidth;
   if (w > 1200) return { center: { lng: -87.421729, lat: 20.296090 }, zoom: 14.44, pitch: 69, bearing: 90 };
@@ -97,8 +114,14 @@ const map = new mapboxgl.Map({
 
 const tb = window.tb = new Threebox(map, map.getCanvas().getContext("webgl"), { defaultLights: false });
 let currentGlowLight = null;
+let statusMode = false;
+let originalMaterials = new WeakMap();
+let modelRef = null;
 
 map.on("style.load", () => {
+  map.setPaintProperty('satellite', 'raster-opacity', 0.75);
+  map.setPaintProperty('satellite', 'raster-brightness-min', 0.15);
+
   map.addLayer({
     id: "custom-threebox-model",
     type: "custom",
@@ -106,33 +129,30 @@ map.on("style.load", () => {
     onAdd: function () {
 
       const shadowReceiver = new THREE.Mesh(
-        new THREE.PlaneGeometry(6000, 6000),
-        new THREE.ShadowMaterial({ opacity: 0.7, color: 0x000000 })
+        new THREE.PlaneGeometry(10000, 10000),
+        new THREE.ShadowMaterial({ opacity: 0.9, color: 0x000000 })
       );
       shadowReceiver.rotation.x = -Math.PI / 2;
-      shadowReceiver.position.y = 0.2;
+      shadowReceiver.position.y = 2.0;
       shadowReceiver.receiveShadow = true;
       tb.world.add(shadowReceiver);
 
       tb.world.children = tb.world.children.filter(child => !child.isLight);
-
-      const hemi = new THREE.HemisphereLight(0xffffff, 0x88aa88, LUZ_HEMI);
+      const hemi = new THREE.HemisphereLight(0xffffff, 0x88aa88, 0.35);
       tb.world.add(hemi);
-
-      const sun = new THREE.DirectionalLight(0xffffff, LUZ_SOL);
-      sun.position.set(1200, 1600, 1400);
+      const sun = new THREE.DirectionalLight(0xffffff, 0.7);
+      sun.position.set(1600, 2200, 1800);
       sun.castShadow = true;
       sun.shadow.mapSize.width = 4096;
       sun.shadow.mapSize.height = 4096;
-      sun.shadow.camera.left = sun.shadow.camera.bottom = -1800;
-      sun.shadow.camera.right = sun.shadow.camera.top = 1800;
+      sun.shadow.camera.left = sun.shadow.camera.bottom = -2200;
+      sun.shadow.camera.right = sun.shadow.camera.top = 2200;
       sun.shadow.camera.near = 1;
-      sun.shadow.camera.far = 6000;
-      sun.shadow.bias = -0.00005;
-      sun.shadow.normalBias = 0.08;
+      sun.shadow.camera.far = 8000;
+      sun.shadow.bias = -0.0001;
+      sun.shadow.normalBias = 0.15;
       tb.world.add(sun);
-
-      const ambient = new THREE.AmbientLight(0xffffff, LUZ_AMBIENTE);
+      const ambient = new THREE.AmbientLight(0xffffff, 0.02);
       tb.world.add(ambient);
 
       tb.loadObj({
@@ -144,90 +164,107 @@ map.on("style.load", () => {
       }, (model) => {
         model.setCoords([-87.43715249608606, 20.30514220104367]);
         model.setRotation({ x: 0, y: 0, z: 270 });
+        modelRef = model;
 
         model.traverse((child) => {
-          if (child.isMesh) {
+          if (child.isMesh && child.material) {
             child.castShadow = true;
             child.receiveShadow = true;
-            if (child.material) {
-              child.material = child.material.clone();
-              child.material.color.multiplyScalar(BRILLO_MATERIAL);
-              child.material.metalness = 0.03;
-              child.material.roughness = 0.82;
-              child.material.needsUpdate = true;
-            }
+            child.material = child.material.clone();
+            child.material.color.multiplyScalar(1.35);
+            child.material.metalness = 0.02;
+            child.material.roughness = 0.85;
+            child.material.needsUpdate = true;
+            originalMaterials.set(child, child.material.clone());
           }
         });
 
         tb.add(model);
 
-        const infoBox   = document.getElementById("infoBox");
-        const fLote     = document.getElementById("metaLote");
-        const fArea     = document.getElementById("metaArea");
-        const fConst    = document.getElementById("metaConst");
-        const fPrecio   = document.getElementById("metaPrecio");
-        const fEstado   = document.getElementById("metaEstado");
+        const statusButton = document.getElementById("statusButton");
+
+        function applyStatusColors(enable) {
+          statusMode = enable;
+          statusButton.textContent = statusMode ? "OCULTAR STATUS" : "MOSTRAR STATUS";
+          statusButton.classList.toggle("active", statusMode);
+
+          model.traverse((child) => {
+            if (child.isMesh && child.userData?.Status) {
+              const s = child.userData.Status.toString().toLowerCase();
+              let color = "#ffffff";
+              if (s.includes("disponible")) color = "#00ff00";
+              else if (s.includes("reserv") || s.includes("apartado")) color = "#FFD700";
+              else if (s.includes("vendido") || s.includes("sold")) color = "#ff0000";
+
+              child.material = child.material.clone();
+              if (statusMode) {
+                child.material.color.set(color);
+                child.material.emissive = new THREE.Color(color);
+                child.material.emissiveIntensity = 0.4;
+                child.material.color.multiplyScalar(0.5);
+              } else {
+                child.material = originalMaterials.get(child).clone();
+              }
+              child.material.needsUpdate = true;
+            }
+          });
+        }
+
+        statusButton.onclick = () => applyStatusColors(!statusMode);
 
         let selectedObject = null;
         let originalMaterial = null;
 
         map.on("click", (e) => {
           const hits = tb.queryRenderedFeatures(e.point);
-
           if (currentGlowLight) { tb.remove(currentGlowLight); currentGlowLight = null; }
           if (selectedObject && originalMaterial) {
             selectedObject.material = originalMaterial;
             selectedObject = null;
           }
-          infoBox.classList.remove("visible");
-          if (hits.length === 0) return;
+          document.getElementById("infoBox").classList.remove("visible");
+          if (!hits.length) return;
+
+          // DESACTIVAR STATUS AL SELECCIONAR LOTE
+          if (statusMode) applyStatusColors(false);
 
           const obj = hits[0].object;
           selectedObject = obj;
           originalMaterial = obj.material;
 
           const d = { ...(obj.userData || {}), ...(obj.userData?.extras || {}) };
-          const Lote   = d["Index"] || "—";
-          const Area   = d["Area"] || "—";
-          const Const  = d["Construible"] || "—";
+          const Lote = d["Index"] || "—";
+          const Area = d["Area"] || "—";
+          const Const = d["Construible"] || "—";
           const Precio = d["Precio"] || "—";
-          let rawStatus = (d["Status"] || "").toString().trim();
+          const rawStatus = (d["Status"] || "").toString().toLowerCase();
 
-          const statusLower = rawStatus.toLowerCase();
           let textoEstado = "DESCONOCIDO";
           let color = "#4488ff";
-
-          if (statusLower.includes("disponible")) {
-            textoEstado = "DISPONIBLE";
-            color = "#00ff00";
-          } else if (statusLower.includes("reserv") || statusLower.includes("apartado")) {
-            textoEstado = "RESERVADO";
-            color = "#FFD700";
-          } else if (statusLower.includes("vendido") || statusLower.includes("sold")) {
-            textoEstado = "VENDIDO";
-            color = "#ff0000";
-          }
+          if (rawStatus.includes("disponible")) { textoEstado = "DISPONIBLE"; color = "#00ff00"; }
+          else if (rawStatus.includes("reserv") || rawStatus.includes("apartado")) { textoEstado = "RESERVADO"; color = "#FFD700"; }
+          else if (rawStatus.includes("vendido") || rawStatus.includes("sold")) { textoEstado = "VENDIDO"; color = "#ff0000"; }
 
           obj.material = obj.material.clone();
           obj.material.color.set(color);
           obj.material.emissive = new THREE.Color(color);
-          obj.material.emissiveIntensity = 3.8;
+          obj.material.emissiveIntensity = 4.0;
           obj.material.needsUpdate = true;
 
-          const glowLight = new THREE.PointLight(color, 9, 130, 2);
+          const glowLight = new THREE.PointLight(color, 10, 150, 2);
           const pos = obj.getWorldPosition(new THREE.Vector3());
-          pos.y += 10;
+          pos.y += 12;
           glowLight.position.copy(pos);
           tb.add(glowLight);
           currentGlowLight = glowLight;
 
-          fLote.innerHTML   = `<div class="label">LOTE</div><div class="value">${Lote}</div>`;
-          fArea.innerHTML   = `<div class="label">ÁREA</div><div class="value">${Area}</div>`;
-          fConst.innerHTML  = `<div class="label">CONSTRUIBLE</div><div class="value">${Const}</div>`;
-          fPrecio.innerHTML = `<div class="label">PRECIO</div><div class="value">$ ${Precio}</div>`;
-          fEstado.innerHTML = `<div class="label">ESTADO</div><div class="value" style="color:${color}">${textoEstado}</div>`;
+          document.getElementById("metaLote").innerHTML    = `<div class="label">LOTE</div><div class="value">${Lote}</div>`;
+          document.getElementById("metaArea").innerHTML    = `<div class="label">ÁREA</div><div class="value">${Area}</div>`;
+          document.getElementById("metaConst").innerHTML   = `<div class="label">CONSTRUIBLE</div><div class="value">${Const}</div>`;
+          document.getElementById("metaPrecio").innerHTML = `<div class="label">PRECIO</div><div class="value">$ ${Precio}</div>`;
+          document.getElementById("metaEstado").innerHTML = `<div class="label">ESTADO</div><div class="value" style="color:${color}">${textoEstado}</div>`;
 
-          infoBox.classList.add("visible");
+          document.getElementById("infoBox").classList.add("visible");
         });
       });
     },
@@ -235,15 +272,11 @@ map.on("style.load", () => {
   });
 });
 
-// Logo de bienvenida + fade perfecto en móvil
+// Fade logo
 let splashFaded = false;
 const splashLogo = document.getElementById("splashLogo");
 ["zoomstart","dragstart","rotatestart","pitchstart","touchstart"].forEach(ev => map.once(ev, () => {
-  if (!splashFaded) {
-    splashFaded = true;
-    splashLogo.style.opacity = 0;
-    setTimeout(() => splashLogo.remove(), 3000);
-  }
+  if (!splashFaded) { splashFaded = true; splashLogo.style.opacity = 0; setTimeout(() => splashLogo.remove(), 3000); }
 }));
 </script>
 </body>
