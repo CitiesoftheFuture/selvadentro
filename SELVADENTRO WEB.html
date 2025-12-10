@@ -190,7 +190,7 @@ map.on("style.load", () => {
 
         function applyStatusColors(enable){
           statusMode = enable;
-          statusButton.textContent = statusMode ? "OCULTAR STATUS" : "MOSTRAR STATUS";
+          statusButton.textContent = statusMode ? "STATUS" :"STATUS";
           statusButton.classList.toggle("active", statusMode);
 
           model.traverse(child => {
@@ -291,3 +291,4 @@ const splashLogo = document.getElementById("splashLogo");
 </script>
 </body>
 </html>
+
