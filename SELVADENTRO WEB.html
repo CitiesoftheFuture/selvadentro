@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>SelvaDentro 3D - FINAL DEFINITIVO</title>
+<title>SelvaDentro 3D - FINAL DEFINITIVO + COLOREADO POR ÁREA</title>
 <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.js"></script>
@@ -10,12 +10,10 @@
   body{margin:0;padding:0;background:#000;overflow:hidden}
   #map{position:absolute;top:0;bottom:0;width:100%}
 
-  /* BOTÓN STATUS – AHORA NO BLOQUEA NUNCA LOS CLICS */
-  #statusButton{
+  /* Botones superiores */
+  .topButton{
     position: fixed;
     top: 18px;
-    left: 50%;
-    transform: translateX(-50%);
     padding: 11px 26px;
     background: rgba(0,0,0,0.5);
     color: white;
@@ -27,25 +25,24 @@
     backdrop-filter: blur(12px);
     box-shadow: 0 6px 20px rgba(0,0,0,0.6);
     transition: all .3s ease;
-    z-index: 2147483647;           /* muy alto para que siempre se vea */
-    pointer-events: none;          /* ¡¡LO IMPORTANTE!! no recibe clics del mapa */
+    z-index: 2147483647;
+    pointer-events: none;
   }
-  /* Solo recibe clics cuando el área del botón (no toda la pantalla) */
-  #statusButton::before{
+  .topButton::before{
     content:"";
     position:absolute;
-    inset: -10px;                  /* zona un poco más grande para tocar fácil */
-    pointer-events: auto;          /* aquí sí recibe clics */
+    inset: -10px;
+    pointer-events: auto;
   }
-  #statusButton:hover{background:rgba(255,255,255,0.2)}
-  #statusButton.active{background:white;color:black}
+  .topButton:hover{background:rgba(255,255,255,0.2)}
+  .topButton.active{background:white;color:black}
+  #statusButton{left: 50%;transform: translateX(-110%);}
+  #areaButton{left: 50%;transform: translateX(10%);}
 
   @media(max-width:767px){
-    #statusButton{
-      top:12px;
-      padding:9px 22px;
-      font-size:14px;
-    }
+    .topButton{top:12px;padding:9px 22px;font-size:14px;}
+    #statusButton{transform:translateX(-120%);}
+    #areaButton{transform:translateX(20%);}
   }
 
   /* resto de estilos sin cambios */
@@ -70,7 +67,6 @@
   .infoLogoBig{width:70%;max-width:260px;display:block;margin:40px auto 18px;opacity:.95}
   .smallLogoContainer{display:flex;justify-content:center;gap:36px;margin-top:20px}
   .smallLogo{height:26px;opacity:.9}
-
   #splashLogo{
     position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
     width:420px;max-width:86vw;z-index:1500;pointer-events:none;
@@ -85,8 +81,9 @@
 
 <div id="map"></div>
 
-<!-- Botón que ya no bloquea clics -->
-<button id="statusButton">MOSTRAR STATUS</button>
+<!-- Dos botones -->
+<button id="statusButton" class="topButton">STATUS</button>
+<button id="areaButton"   class="topButton">ÁREA</button>
 
 <div id="infoBox">
   <div id="metaLote" class="metadata-block"></div>
@@ -132,6 +129,7 @@ const tb = window.tb = new Threebox(map, map.getCanvas().getContext('webgl'), {d
 
 let currentGlowLight = null;
 let statusMode = false;
+let areaMode   = false;
 let originalMaterials = new WeakMap();
 let selectedObject = null;
 let originalMaterial = null;
@@ -146,7 +144,7 @@ map.on("style.load", () => {
     renderingMode: "3d",
     onAdd: function() {
 
-      // luces y sombra (igual que antes)
+      // Luces y sombras (igual que antes)
       const shadowPlane = new THREE.Mesh(new THREE.PlaneGeometry(15000,15000), new THREE.ShadowMaterial({opacity:0.95}));
       shadowPlane.rotation.x = -Math.PI/2;
       shadowPlane.position.y = 3.8;
@@ -186,12 +184,27 @@ map.on("style.load", () => {
 
         tb.add(model);
 
-        const statusButton = document.getElementById("statusButton");
+        // ------------------------------------------------------------------
+        // Función para volver al material original (sin colorear)
+        // ------------------------------------------------------------------
+        function resetAllMaterials(){
+          model.traverse(child => {
+            if(child.isMesh && originalMaterials.has(child)){
+              child.material = originalMaterials.get(child).clone();
+              child.material.emissiveIntensity = 0;
+            }
+          });
+        }
 
+        // ------------------------------------------------------------------
+        // MODO STATUS (verde / amarillo / rojo)
+        // ------------------------------------------------------------------
         function applyStatusColors(enable){
           statusMode = enable;
-          statusButton.textContent = statusMode ? "STATUS" :"STATUS";
-          statusButton.classList.toggle("active", statusMode);
+          document.getElementById("statusButton").classList.toggle("active", statusMode);
+          if(enable) areaMode = false, document.getElementById("areaButton").classList.remove("active");
+
+          if(!enable){ resetAllMaterials(); return; }
 
           model.traverse(child => {
             if(child.isMesh && child.userData?.Status){
@@ -202,34 +215,74 @@ map.on("style.load", () => {
               else if(s.includes("vendido") || s.includes("sold")) color = "#ff0000";
 
               child.material = child.material.clone();
-              if(statusMode){
-                child.material.color.set(color);
-                child.material.emissive = new THREE.Color(color);
-                child.material.emissiveIntensity = 0.4;
-                child.material.color.multiplyScalar(0.5);
-              } else {
-                child.material = originalMaterials.get(child).clone();
-              }
+              child.material.color.set(color);
+              child.material.emissive = new THREE.Color(color);
+              child.material.emissiveIntensity = 0.4;
+              child.material.color.multiplyScalar(0.5);
               child.material.needsUpdate = true;
             }
           });
         }
 
-        statusButton.addEventListener("click", () => applyStatusColors(!statusMode));
+        // ------------------------------------------------------------------
+        // MODO ÁREA (coloreado por rangos)
+        // ------------------------------------------------------------------
+        function applyAreaColors(enable){
+          areaMode = enable;
+          document.getElementById("areaButton").classList.toggle("active", areaMode);
+          if(enable) statusMode = false, document.getElementById("statusButton").classList.remove("active");
 
-        // ← AQUÍ ESTÁ EL CLICK DEL MAPA (corregido y limpio)
+          if(!enable){ resetAllMaterials(); return; }
+
+          model.traverse(child => {
+            if(child.isMesh && child.userData?.Area){
+              const area = parseFloat(child.userData.Area);
+              let color = "#888888";
+
+              if(area >= 1300)      color = "#9C27B0"; // morado
+              else if(area >= 1000) color = "#2196F3"; // azul
+              else if(area >= 800)  color = "#4CAF50"; // verde
+              else if(area >= 600)  color = "#FFEB3B"; // amarillo
+              else if(area >= 400)  color = "#FF9800"; // naranja
+
+              child.material = child.material.clone();
+              child.material.color.set(color);
+              child.material.emissive = new THREE.Color(color);
+              child.material.emissiveIntensity = 0.45;
+              child.material.needsUpdate = true;
+            }
+          });
+        }
+
+        // ------------------------------------------------------------------
+        // Botones
+        // ------------------------------------------------------------------
+        document.getElementById("statusButton").addEventListener("click", () => {
+          applyStatusColors(!statusMode);
+          if(areaMode) applyAreaColors(false);
+        });
+
+        document.getElementById("areaButton").addEventListener("click", () => {
+          applyAreaColors(!areaMode);
+          if(statusMode) applyStatusColors(false);
+        });
+
+        // ------------------------------------------------------------------
+        // Click en lote → información + highlight
+        // ------------------------------------------------------------------
         map.on("click", e => {
           const hits = tb.queryRenderedFeatures(e.point);
 
-          // limpiar selección anterior
+          // limpiar highlight anterior
           if(currentGlowLight){ tb.remove(currentGlowLight); currentGlowLight=null; }
-          if(selectedObject && originalMaterial){ selectedObject.material = originalMaterial; }
-
+          if(selectedObject && originalMaterial){ selectedObject.material = originalMaterial; selectedObject = null; }
           document.getElementById("infoBox").classList.remove("visible");
+
           if(!hits.length) return;
 
-          // si está activado el modo status, lo desactivamos al seleccionar lote
+          // si algún modo está activo, lo desactivamos temporalmente para que el highlight sea visible
           if(statusMode) applyStatusColors(false);
+          if(areaMode)   applyAreaColors(false);
 
           const obj = hits[0].object;
           selectedObject = obj;
@@ -237,36 +290,39 @@ map.on("style.load", () => {
 
           const d = {...(obj.userData||{}), ...(obj.userData?.extras||{})};
 
-          const Lote = d["Index"] || "—";
-          const Area = d["Area"] || "—";
-          const Const = d["Construible"] || "—";
-          const Precio = d["Precio"] || "—";
+          const Lote   = d["Index"]       || "—";
+          const Area   = d["Area"]        || "—";
+          const Const  = d["Construible"] || "—";
+          const Precio = d["Precio"]      || "—";
+
           const rawStatus = (d["Status"]||"").toString().toLowerCase();
-
           let textoEstado = "DESCONOCIDO";
-          let color = "#4488ff";
-          if(rawStatus.includes("disponible")) {textoEstado="DISPONIBLE"; color="#00ff00";}
-          else if(rawStatus.includes("reserv")||rawStatus.includes("apartado")) {textoEstado="RESERVADO"; color="#FFD700";}
-          else if(rawStatus.includes("vendido")||rawStatus.includes("sold")) {textoEstado="VENDIDO"; color="#ff0000";}
+          let colorEstado = "#4488ff";
 
+          if(rawStatus.includes("disponible"))      {textoEstado="DISPONIBLE"; colorEstado="#00ff00";}
+          else if(rawStatus.includes("reserv")||rawStatus.includes("apartado")) {textoEstado="RESERVADO"; colorEstado="#FFD700";}
+          else if(rawStatus.includes("vendido")||rawStatus.includes("sold"))   {textoEstado="VENDIDO";   colorEstado="#ff0000";}
+
+          // Highlight muy brillante
           obj.material = obj.material.clone();
-          obj.material.color.set(color);
-          obj.material.emissive = new THREE.Color(color);
+          obj.material.color.set(colorEstado);
+          obj.material.emissive = new THREE.Color(colorEstado);
           obj.material.emissiveIntensity = 4.0;
           obj.material.needsUpdate = true;
 
-          const glow = new THREE.PointLight(color,10,150,2);
+          const glow = new THREE.PointLight(colorEstado,10,150,2);
           const pos = obj.getWorldPosition(new THREE.Vector3());
           pos.y += 12;
           glow.position.copy(pos);
           tb.add(glow);
           currentGlowLight = glow;
 
-          document.getElementById("metaLote").innerHTML = `<div class="label">LOTE</div><div class="value">${Lote}</div>`;
-          document.getElementById("metaArea").innerHTML = `<div class="label">ÁREA</div><div class="value">${Area}</div>`;
-          document.getElementById("metaConst").innerHTML = `<div class="label">CONSTRUIBLE</div><div class="value">${Const}</div>`;
+          // Rellenar panel de información
+          document.getElementById("metaLote").innerHTML   = `<div class="label">LOTE</div><div class="value">${Lote}</div>`;
+          document.getElementById("metaArea").innerHTML   = `<div class="label">ÁREA</div><div class="value">${Area}</div>`;
+          document.getElementById("metaConst").innerHTML  = `<div class="label">CONSTRUIBLE</div><div class="value">${Const}</div>`;
           document.getElementById("metaPrecio").innerHTML = `<div class="label">PRECIO</div><div class="value">$ ${Precio}</div>`;
-          document.getElementById("metaEstado").innerHTML = `<div class="label">ESTADO</div><div class="value" style="color:${color}">${textoEstado}</div>`;
+          document.getElementById("metaEstado").innerHTML = `<div class="label">ESTADO</div><div class="value" style="color:${colorEstado}">${textoEstado}</div>`;
 
           document.getElementById("infoBox").classList.add("visible");
         });
@@ -276,7 +332,7 @@ map.on("style.load", () => {
   });
 });
 
-// Fade-out del splash logo
+// Fade-out del logo splash
 let splashFaded = false;
 const splashLogo = document.getElementById("splashLogo");
 ["zoomstart","dragstart","rotatestart","pitchstart","touchstart","mousedown"].forEach(ev =>
@@ -291,4 +347,3 @@ const splashLogo = document.getElementById("splashLogo");
 </script>
 </body>
 </html>
-
