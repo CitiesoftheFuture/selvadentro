@@ -2,70 +2,128 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>SelvaDentro 3D - FINAL DEFINITIVO + COLOREADO POR ÁREA</title>
+<title>SelvaDentro 3D - FINAL PERFECTO (Móvil + Panel 35% + Scroll)</title>
 <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
-  body{margin:0;padding:0;background:#000;overflow:hidden}
+  body{margin:0;padding:0;background:#000;overflow:hidden;font-family:Arial,sans-serif}
   #map{position:absolute;top:0;bottom:0;width:100%}
-
-  /* Botones superiores */
   .topButton{
-    position: fixed;
-    top: 18px;
-    padding: 11px 26px;
-    background: rgba(0,0,0,0.5);
-    color: white;
-    font-weight: bold;
-    font-size: 14.5px;
-    border: 2px solid white;
-    border-radius: 30px;
-    cursor: pointer;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.6);
-    transition: all .3s ease;
-    z-index: 2147483647;
-    pointer-events: none;
+    position:fixed;top:18px;padding:11px 26px;background:rgba(0,0,0,0.5);color:white;
+    font-weight:bold;font-size:14.5px;border:2px solid white;border-radius:30px;
+    cursor:pointer;backdrop-filter:blur(12px);box-shadow:0 6px 20px rgba(0,0,0,0.6);
+    transition:all .3s;z-index:2147483647;pointer-events:none;
   }
-  .topButton::before{
-    content:"";
-    position:absolute;
-    inset: -10px;
-    pointer-events: auto;
-  }
+  .topButton::before{content:"";position:absolute;inset:-10px;pointer-events:auto;}
   .topButton:hover{background:rgba(255,255,255,0.2)}
   .topButton.active{background:white;color:black}
-  #statusButton{left: 50%;transform: translateX(-110%);}
-  #areaButton{left: 50%;transform: translateX(10%);}
-
+  #statusButton{left:50%;transform:translateX(-110%);}
+  #areaButton{left:50%;transform:translateX(10%);}
   @media(max-width:767px){
     .topButton{top:12px;padding:9px 22px;font-size:14px;}
     #statusButton{transform:translateX(-120%);}
     #areaButton{transform:translateX(20%);}
   }
 
-  /* resto de estilos sin cambios */
+  /* PANEL PRINCIPAL - MODIFICADO PARA 35% EN MÓVIL */
   #infoBox{
-    position:absolute;background:rgb(67,81,63);color:white;padding:28px;border-radius:26px;
-    font-family:"Arial Black",sans-serif;box-shadow:0 10px 40px rgba(0,0,0,0.7);z-index:1000;
-    max-width:90%;width:380px;box-sizing:border-box;transition:all .35s ease;
-    opacity:0;visibility:hidden;transform:translateY(20px);
+    position:absolute;background:rgb(67,81,63);color:white;padding:26px 22px;border-radius:26px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.7);z-index:1000;max-width:90%;width:380px;
+    transition:all .35s ease;opacity:0;visibility:hidden;transform:translateY(20px);
+    overflow:hidden; /* necesario para el scroll interno */
   }
   #infoBox.visible{opacity:.98;visibility:visible;transform:translateY(0)}
-  @media(min-width:768px){#infoBox{top:30px;left:30px}}
-  @media(max-width:767px){
-    #infoBox{left:50%;bottom:0;transform:translateX(-50%) translateY(100%);width:100%;max-height:50vh;
-    padding:24px 20px;border-radius:22px 22px 0 0}
-    #infoBox.visible{transform:translateX(-50%) translateY(-15px)}
+
+  /* ESCRITORIO */
+  @media(min-width:768px){
+    #infoBox{top:30px;left:30px;max-height:95vh;overflow-y:auto;}
   }
+
+  /* MÓVIL - Solo sube 35% de la pantalla */
+  @media(max-width:767px){
+    #infoBox{
+      left:50%;bottom:0;transform:translateX(-50%) translateY(100%);
+      width:100%;max-width:none;border-radius:26px 26px 0 0;
+      padding-bottom:80px;padding-top:56px;
+      height:100vh; /* ocupará toda la altura disponible */
+      max-height:100vh;
+    }
+    #infoBox.visible{
+      transform:translateX(-50%) translateY(0);
+      bottom:0;
+      top:65% !important; /* <-- Aquí está la clave: solo muestra 35% */
+    }
+    /* Contenedor con scroll */
+    #infoBox::after{
+      content:"";
+      position:absolute;
+      top:0;left:0;right:0;bottom:0;
+      pointer-events:none;
+      background:linear-gradient(to bottom, transparent 90%, rgba(67,81,63,0.8));
+      opacity:0;
+      transition:opacity .4s;
+    }
+    #infoBox.visible::after{opacity:1;}
+  }
+
+  /* Contenido interno con scroll en móvil */
+  .infoBoxContent{
+    max-height:100%;
+    overflow-y:auto;
+    padding-right:8px;
+    -webkit-overflow-scrolling:touch;
+  }
+  @media(max-width:767px){
+    .infoBoxContent{
+      padding-bottom:120px; /* espacio para que el último elemento sea visible */
+    }
+  }
+
+  /* BOTÓN CERRAR EN MÓVIL */
+  #closeInfoMobile{
+    position:absolute;top:12px;right:16px;width:40px;height:40px;
+    background:rgba(0,0,0,0.5);border-radius:50%;cursor:pointer;
+    display:none;align-items:center;justify-content:center;
+    backdrop-filter:blur(10px);z-index:10;border:2px solid rgba(255,255,255,0.3);
+  }
+  #closeInfoMobile::before,#closeInfoMobile::after{
+    content:"";position:absolute;width:20px;height:3px;background:white;
+    transform:rotate(45deg);
+  }
+  #closeInfoMobile::after{transform:rotate(-45deg);}
+  @media(max-width:767px){#closeInfoMobile{display:flex;}}
+
   .metadata-block{margin-bottom:22px;text-align:center}
-  .label{font-size:15px;opacity:.85;margin-bottom:4px}
-  .value{font-size:20px;font-weight:bold}
-  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;margin:10px 0 25px}
+  .label{font-size:14px;opacity:.85;margin-bottom:4px}
+  .value{font-size:22px;font-weight:bold}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin:10px 0 22px}
   .pair{text-align:center}
-  .infoLogoBig{width:70%;max-width:260px;display:block;margin:40px auto 18px;opacity:.95}
-  .smallLogoContainer{display:flex;justify-content:center;gap:36px;margin-top:20px}
+
+  /* FORMULARIO */
+  .contactCard{
+    background:rgba(255,255,255,0.97);color:#333;padding:20px;border-radius:20px;
+    margin-top:30px;box-shadow:0 8px 30px rgba(0,0,0,0.3);
+  }
+  .contactCard input, .contactCard textarea{
+    width:100%;padding:11px 14px;margin:9px 0;border-radius:12px;border:1px solid #ccc;
+    font-size:15px;background:#fff;box-sizing:border-box;
+  }
+  .contactCard textarea{height:78px;resize:none;}
+  #sendBtn{
+    width:100%;padding:14px;margin-top:14px;background:#f4ede4;color:#333;
+    font-weight:bold;font-size:17px;border:none;border-radius:30px;cursor:pointer;
+    transition:all .3s;box-shadow:0 4px 15px rgba(0,0,0,0.1);
+  }
+  #sendBtn:hover{background:#e8e1d5;transform:translateY(-2px);}
+  #sendBtn:disabled{background:#ccc;cursor:not-allowed;}
+  .thankYou{
+    text-align:center;padding:20px;font-size:17px;color:#0b8b0b;background:#f0fff0;
+    border-radius:12px;margin-top:10px;display:none;
+  }
+  .infoLogoBig{width:68%;max-width:240px;display:block;margin:36px auto 16px;opacity:.95}
+  .smallLogoContainer{display:flex;justify-content:center;gap:32px;margin-top:18px}
   .smallLogo{height:26px;opacity:.9}
   #splashLogo{
     position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
@@ -80,32 +138,52 @@
 <script src="https://cdn.jsdelivr.net/gh/jscastro76/threebox@v.2.2.2/dist/threebox.min.js"></script>
 
 <div id="map"></div>
-
-<!-- Dos botones -->
 <button id="statusButton" class="topButton">STATUS</button>
-<button id="areaButton"   class="topButton">ÁREA</button>
+<button id="areaButton" class="topButton">ÁREA</button>
 
 <div id="infoBox">
-  <div id="metaLote" class="metadata-block"></div>
-  <div class="two-col">
-    <div id="metaArea" class="pair"></div>
-    <div id="metaConst" class="pair"></div>
-  </div>
-  <div class="two-col">
-    <div id="metaPrecio" class="pair"></div>
-    <div id="metaEstado" class="pair"></div>
-  </div>
-  <img class="infoLogoBig" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
-  <div class="smallLogoContainer">
-    <img class="smallLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/logo-ama.png">
-    <img class="smallLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/civis.png">
-  </div>
+  <button id="closeInfoMobile" title="Cerrar"></button>
+  <div class="infoBoxContent"> <!-- <<< Contenedor con scroll -->
+    <div id="metaLote" class="metadata-block"></div>
+    <div class="two-col">
+      <div id="metaArea" class="pair"></div>
+      <div id="metaConst" class="pair"></div>
+    </div>
+    <div class="two-col">
+      <div id="metaPrecio" class="pair"></div>
+      <div id="metaEstado" class="pair"></div>
+    </div>
+
+    <div id="contactCard" class="contactCard" style="display:none;">
+      <h3 style="margin:0 0 16px;text-align:center;color:#333;">¿Interesado en este lote?</h3>
+      <form id="contactForm">
+        <input type="text" id="name" placeholder="Nombre completo" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="tel" id="phone" placeholder="Teléfono (opcional)">
+        <textarea id="message" placeholder="Mensaje (opcional)"></textarea>
+        <button type="submit" id="sendBtn">ENVIAR CONSULTA</button>
+      </form>
+      <div class="thankYou" id="thankYouMsg">
+        ¡Perfecto! Te contactaremos en menos de 24h
+      </div>
+    </div>
+
+    <img class="infoLogoBig" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
+    <div class="smallLogoContainer">
+      <img class="smallLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/logo-ama.png">
+      <img class="smallLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/civis.png">
+    </div>
+  </div> <!-- fin .infoBoxContent -->
 </div>
 
 <img id="splashLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
 
 <script>
 mapboxgl.accessToken = "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyNGtyYmtvIn0.f8f_PAURro1hU-sh_xnAuA";
+
+emailjs.init('YOUR_PUBLIC_KEY_HERE');
+const SERVICE_ID = 'YOUR_SERVICE_ID';
+const TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
 
 function getInitialCamera(){
   const w=window.innerWidth;
@@ -115,46 +193,31 @@ function getInitialCamera(){
 }
 
 const map = new mapboxgl.Map({
-  container:"map",
-  style:"mapbox://styles/mapbox/satellite-v9",
-  center:getInitialCamera().center,
-  zoom:getInitialCamera().zoom,
-  pitch:getInitialCamera().pitch,
-  bearing:getInitialCamera().bearing,
-  antialias:true,
-  fadeDuration:0
+  container:"map", style:"mapbox://styles/mapbox/satellite-v9",
+  center:getInitialCamera().center, zoom:getInitialCamera().zoom,
+  pitch:getInitialCamera().pitch, bearing:getInitialCamera().bearing,
+  antialias:true, fadeDuration:0
 });
 
 const tb = window.tb = new Threebox(map, map.getCanvas().getContext('webgl'), {defaultLights:false});
-
-let currentGlowLight = null;
-let statusMode = false;
-let areaMode   = false;
+let currentGlowLight=null, statusMode=false, areaMode=false;
 let originalMaterials = new WeakMap();
-let selectedObject = null;
-let originalMaterial = null;
+let selectedObject=null, originalMaterial=null;
+let currentLot = "";
 
 map.on("style.load", () => {
   map.setPaintProperty('satellite','raster-opacity',0.68);
   map.setPaintProperty('satellite','raster-brightness-min',0.08);
 
   map.addLayer({
-    id: "custom-threebox-model",
-    type: "custom",
-    renderingMode: "3d",
+    id: "custom-threebox-model", type: "custom", renderingMode: "3d",
     onAdd: function() {
-
-      // Luces y sombras (igual que antes)
       const shadowPlane = new THREE.Mesh(new THREE.PlaneGeometry(15000,15000), new THREE.ShadowMaterial({opacity:0.95}));
-      shadowPlane.rotation.x = -Math.PI/2;
-      shadowPlane.position.y = 3.8;
-      shadowPlane.receiveShadow = true;
+      shadowPlane.rotation.x = -Math.PI/2; shadowPlane.position.y = 3.8; shadowPlane.receiveShadow = true;
       tb.world.add(shadowPlane);
-
       tb.world.add(new THREE.HemisphereLight(0xffffff,0x88aa88,0.35));
       const sun = new THREE.DirectionalLight(0xffffff,0.95);
-      sun.position.set(1800,3000,2200);
-      sun.castShadow = true;
+      sun.position.set(1800,3000,2200); sun.castShadow = true;
       sun.shadow.mapSize.width = sun.shadow.mapSize.height = 4096;
       sun.shadow.camera.left = sun.shadow.camera.bottom = -2800;
       sun.shadow.camera.right = sun.shadow.camera.top = 2800;
@@ -163,183 +226,175 @@ map.on("style.load", () => {
 
       tb.loadObj({
         obj:"https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVA3D.glb",
-        type:"gltf",
-        scale:1,
-        units:"meters",
-        rotation:{x:90,y:-90,z:0}
+        type:"gltf", scale:1, units:"meters", rotation:{x:90,y:-90,z:0}
       }, model => {
         model.setCoords([-87.43715249608606,20.30514220104367]);
         model.setRotation({x:0,y:0,z:270});
-
         model.traverse(child => {
           if(child.isMesh && child.material){
             child.castShadow = child.receiveShadow = true;
             child.material = child.material.clone();
             child.material.color.multiplyScalar(1.35);
-            child.material.metalness = 0.02;
-            child.material.roughness = 0.85;
+            child.material.metalness = 0.02; child.material.roughness = 0.85;
             originalMaterials.set(child, child.material.clone());
           }
         });
-
         tb.add(model);
 
-        // ------------------------------------------------------------------
-        // Función para volver al material original (sin colorear)
-        // ------------------------------------------------------------------
         function resetAllMaterials(){
-          model.traverse(child => {
-            if(child.isMesh && originalMaterials.has(child)){
-              child.material = originalMaterials.get(child).clone();
-              child.material.emissiveIntensity = 0;
+          model.traverse(c => {
+            if(c.isMesh && originalMaterials.has(c)){
+              c.material = originalMaterials.get(c).clone();
+              c.material.emissiveIntensity = 0;
             }
           });
         }
 
-        // ------------------------------------------------------------------
-        // MODO STATUS (verde / amarillo / rojo)
-        // ------------------------------------------------------------------
         function applyStatusColors(enable){
           statusMode = enable;
-          document.getElementById("statusButton").classList.toggle("active", statusMode);
-          if(enable) areaMode = false, document.getElementById("areaButton").classList.remove("active");
-
+          document.getElementById("statusButton").classList.toggle("active", enable);
+          if(enable){ areaMode=false; document.getElementById("areaButton").classList.remove("active"); }
           if(!enable){ resetAllMaterials(); return; }
-
           model.traverse(child => {
             if(child.isMesh && child.userData?.Status){
               const s = child.userData.Status.toString().toLowerCase();
-              let color = "#ffffff";
-              if(s.includes("disponible")) color = "#00ff00";
-              else if(s.includes("reserv") || s.includes("apartado")) color = "#FFD700";
-              else if(s.includes("vendido") || s.includes("sold")) color = "#ff0000";
-
+              let col = s.includes("disponible") ? "#00ff00" : s.includes("reserv")||s.includes("apartado") ? "#FFD700" : "#ff0000";
               child.material = child.material.clone();
-              child.material.color.set(color);
-              child.material.emissive = new THREE.Color(color);
+              child.material.color.set(col);
+              child.material.emissive = new THREE.Color(col);
               child.material.emissiveIntensity = 0.4;
               child.material.color.multiplyScalar(0.5);
-              child.material.needsUpdate = true;
             }
           });
         }
 
-        // ------------------------------------------------------------------
-        // MODO ÁREA (coloreado por rangos)
-        // ------------------------------------------------------------------
         function applyAreaColors(enable){
           areaMode = enable;
-          document.getElementById("areaButton").classList.toggle("active", areaMode);
-          if(enable) statusMode = false, document.getElementById("statusButton").classList.remove("active");
-
+          document.getElementById("areaButton").classList.toggle("active", enable);
+          if(enable){ statusMode=false; document.getElementById("statusButton").classList.remove("active"); }
           if(!enable){ resetAllMaterials(); return; }
-
           model.traverse(child => {
             if(child.isMesh && child.userData?.Area){
-              const area = parseFloat(child.userData.Area);
-              let color = "#888888";
-
-              if(area >= 1300)      color = "#9C27B0"; // morado
-              else if(area >= 1000) color = "#2196F3"; // azul
-              else if(area >= 800)  color = "#4CAF50"; // verde
-              else if(area >= 600)  color = "#FFEB3B"; // amarillo
-              else if(area >= 400)  color = "#FF9800"; // naranja
-
+              const a = parseFloat(child.userData.Area);
+              let col = a>=1300?"#9C27B0":a>=1000?"#2196F3":a>=800?"#4CAF50":a>=600?"#FFEB3B":a>=400?"#FF9800":"#888";
               child.material = child.material.clone();
-              child.material.color.set(color);
-              child.material.emissive = new THREE.Color(color);
+              child.material.color.set(col);
+              child.material.emissive = new THREE.Color(col);
               child.material.emissiveIntensity = 0.45;
-              child.material.needsUpdate = true;
             }
           });
         }
 
-        // ------------------------------------------------------------------
-        // Botones
-        // ------------------------------------------------------------------
-        document.getElementById("statusButton").addEventListener("click", () => {
+        const infoBox = document.getElementById("infoBox");
+        const closeBtn = document.getElementById("closeInfoMobile");
+
+        function closeInfoPanel(){
+          infoBox.classList.remove("visible");
+          if(currentGlowLight){ tb.remove(currentGlowLight); currentGlowLight=null; }
+          if(selectedObject && originalMaterial){
+            selectedObject.material = originalMaterial;
+            selectedObject = null;
+          }
+          document.getElementById("contactCard").style.display = "none";
+          document.getElementById("thankYouMsg").style.display = "none";
+          document.getElementById("contactForm").style.display = "block";
+          document.getElementById("contactForm").reset();
+        }
+        closeBtn.onclick = closeInfoPanel;
+        infoBox.addEventListener("click", e => {
+          if(window.innerWidth <= 767 && e.target === infoBox){
+            closeInfoPanel();
+          }
+        });
+
+        document.getElementById("statusButton").onclick = () => {
+          if(infoBox.classList.contains("visible") && window.innerWidth <= 767) closeInfoPanel();
           applyStatusColors(!statusMode);
           if(areaMode) applyAreaColors(false);
-        });
-
-        document.getElementById("areaButton").addEventListener("click", () => {
+        };
+        document.getElementById("areaButton").onclick = () => {
+          if(infoBox.classList.contains("visible") && window.innerWidth <= 767) closeInfoPanel();
           applyAreaColors(!areaMode);
           if(statusMode) applyStatusColors(false);
-        });
+        };
 
-        // ------------------------------------------------------------------
-        // Click en lote → información + highlight
-        // ------------------------------------------------------------------
         map.on("click", e => {
           const hits = tb.queryRenderedFeatures(e.point);
-
-          // limpiar highlight anterior
           if(currentGlowLight){ tb.remove(currentGlowLight); currentGlowLight=null; }
-          if(selectedObject && originalMaterial){ selectedObject.material = originalMaterial; selectedObject = null; }
+          if(selectedObject && originalMaterial){ selectedObject.material = originalMaterial; selectedObject=null; }
           document.getElementById("infoBox").classList.remove("visible");
+          document.getElementById("contactCard").style.display = "none";
+          document.getElementById("thankYouMsg").style.display = "none";
+          document.getElementById("contactForm").style.display = "block";
+          document.getElementById("contactForm").reset();
 
           if(!hits.length) return;
-
-          // si algún modo está activo, lo desactivamos temporalmente para que el highlight sea visible
           if(statusMode) applyStatusColors(false);
-          if(areaMode)   applyAreaColors(false);
+          if(areaMode) applyAreaColors(false);
 
           const obj = hits[0].object;
           selectedObject = obj;
           originalMaterial = obj.material.clone();
-
           const d = {...(obj.userData||{}), ...(obj.userData?.extras||{})};
+          currentLot = d["Index"] || "—";
 
-          const Lote   = d["Index"]       || "—";
-          const Area   = d["Area"]        || "—";
-          const Const  = d["Construible"] || "—";
-          const Precio = d["Precio"]      || "—";
+          const raw = (d["Status"]||"").toString().toLowerCase();
+          const isAvailable = raw.includes("disponible");
+          const colorEstado = isAvailable ? "#00ff00" : raw.includes("reserv")||raw.includes("apartado") ? "#FFD700" : "#ff0000";
+          const textoEstado = isAvailable ? "DISPONIBLE" : raw.includes("reserv")||raw.includes("apartado") ? "RESERVADO" : "VENDIDO";
 
-          const rawStatus = (d["Status"]||"").toString().toLowerCase();
-          let textoEstado = "DESCONOCIDO";
-          let colorEstado = "#4488ff";
-
-          if(rawStatus.includes("disponible"))      {textoEstado="DISPONIBLE"; colorEstado="#00ff00";}
-          else if(rawStatus.includes("reserv")||rawStatus.includes("apartado")) {textoEstado="RESERVADO"; colorEstado="#FFD700";}
-          else if(rawStatus.includes("vendido")||rawStatus.includes("sold"))   {textoEstado="VENDIDO";   colorEstado="#ff0000";}
-
-          // Highlight muy brillante
           obj.material = obj.material.clone();
           obj.material.color.set(colorEstado);
           obj.material.emissive = new THREE.Color(colorEstado);
           obj.material.emissiveIntensity = 4.0;
-          obj.material.needsUpdate = true;
 
           const glow = new THREE.PointLight(colorEstado,10,150,2);
-          const pos = obj.getWorldPosition(new THREE.Vector3());
-          pos.y += 12;
-          glow.position.copy(pos);
-          tb.add(glow);
-          currentGlowLight = glow;
+          const pos = obj.getWorldPosition(new THREE.Vector3()); pos.y += 12;
+          glow.position.copy(pos); tb.add(glow); currentGlowLight = glow;
 
-          // Rellenar panel de información
-          document.getElementById("metaLote").innerHTML   = `<div class="label">LOTE</div><div class="value">${Lote}</div>`;
-          document.getElementById("metaArea").innerHTML   = `<div class="label">ÁREA</div><div class="value">${Area}</div>`;
-          document.getElementById("metaConst").innerHTML  = `<div class="label">CONSTRUIBLE</div><div class="value">${Const}</div>`;
-          document.getElementById("metaPrecio").innerHTML = `<div class="label">PRECIO</div><div class="value">$ ${Precio}</div>`;
+          document.getElementById("metaLote").innerHTML = `<div class="label">LOTE</div><div class="value">${currentLot}</div>`;
+          document.getElementById("metaArea").innerHTML = `<div class="label">ÁREA</div><div class="value">${d["Area"]||"—"} m²</div>`;
+          document.getElementById("metaConst").innerHTML = `<div class="label">CONSTRUIBLE</div><div class="value">${d["Construible"]||"—"} m²</div>`;
+          document.getElementById("metaPrecio").innerHTML = `<div class="label">PRECIO</div><div class="value">$ ${d["Precio"]||"—"}</div>`;
           document.getElementById("metaEstado").innerHTML = `<div class="label">ESTADO</div><div class="value" style="color:${colorEstado}">${textoEstado}</div>`;
 
-          document.getElementById("infoBox").classList.add("visible");
+          if(isAvailable) document.getElementById("contactCard").style.display = "block";
+          infoBox.classList.add("visible");
         });
+
+        // EmailJS
+        document.getElementById("contactForm").onsubmit = function(e) {
+          e.preventDefault();
+          const btn = document.getElementById("sendBtn");
+          btn.disabled = true; btn.textContent = "Enviando...";
+          emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+            name: document.getElementById("name").value,
+            email: document.getElementById("email").value,
+            phone: document.getElementById("phone").value || "No proporcionado",
+            lot: currentLot,
+            message: document.getElementById("message").value || "Sin mensaje"
+          }).then(() => {
+            document.getElementById("contactForm").style.display = "none";
+            document.getElementById("thankYouMsg").style.display = "block";
+          }).catch(() => {
+            alert("Error al enviar. Inténtalo más tarde.");
+            btn.disabled = false; btn.textContent = "RESERVAR";
+          });
+        };
       });
     },
     render: () => tb.update()
   });
 });
 
-// Fade-out del logo splash
+// Splash logo fade
 let splashFaded = false;
 const splashLogo = document.getElementById("splashLogo");
 ["zoomstart","dragstart","rotatestart","pitchstart","touchstart","mousedown"].forEach(ev =>
   map.once(ev, () => {
     if(!splashFaded){
-      splashFaded = true;
-      splashLogo.style.opacity = 0;
+      splashFaded=true;
+      splashLogo.style.opacity=0;
       setTimeout(() => splashLogo.remove(), 3000);
     }
   })
