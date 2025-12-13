@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>SelvaDentro 3D - COLORES PERFECTOS</title>
+<title>SelvaDentro 3D - FINAL CORREGIDO</title>
 <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.js"></script>
@@ -41,8 +41,10 @@
   #areaLegend .item{display:flex;align-items:center;gap:6px;}
   #areaLegend span{display:inline-block;width:16px;height:16px;border-radius:3px;flex-shrink:0;}
 
+  /* PANEL INFO */
   #infoBox{
-    position:absolute;background:rgb(67,81,63);color:white;padding:26px 22px;border-radius:26px;
+    position:absolute;background:rgb(67,81,63);color:white;padding:26px 22px;
+    border-radius:32px;
     box-shadow:0 10px 40px rgba(0,0,0,0.7);z-index:1000;max-width:90%;width:380px;
     transition:all .35s ease;opacity:0;visibility:hidden;transform:translateY(20px);overflow:hidden;
   }
@@ -50,25 +52,40 @@
   @media(min-width:768px){#infoBox{top:30px;left:30px;max-height:95vh;overflow-y:auto;}}
   @media(max-width:767px){
     #infoBox{left:50%;bottom:0;transform:translateX(-50%) translateY(100%);width:100%;max-width:none;
-      border-radius:26px 26px 0 0;padding-bottom:80px;padding-top:56px;height:100vh;}
-    #infoBox.visible{transform:translateX(-50%) translateY(0);top:65% !important;}
+      border-radius:32px 32px 0 0;
+      padding-top:110px;padding-bottom:80px;height:100vh;}
+    #infoBox.visible{
+      transform:translateX(-50%) translateY(0);
+      bottom:0;
+      top:55% !important;
+    }
   }
-  .infoBoxContent{max-height:100%;overflow-y:auto;padding-right:8px;-webkit-overflow-scrolling:touch;}
-  @media(max-width:767px){.infoBoxContent{padding-bottom:120px;}}
 
-  #closeInfoMobile{
-    position:absolute;top:12px;right:16px;width:40px;height:40px;background:rgba(0,0,0,0.5);
-    border-radius:50%;cursor:pointer;display:none;align-items:center;justify-content:center;
-    backdrop-filter:blur(10px);border:2px solid rgba(255,255,255,0.3);z-index:10;
+  .infoBoxContent{
+    max-height:100%;overflow-y:auto;padding-right:8px;-webkit-overflow-scrolling:touch;
   }
-  #closeInfoMobile::before,#closeInfoMobile::after{content:"";position:absolute;width:20px;height:3px;background:white;}
-  #closeInfoMobile::before{transform:rotate(45deg);}#closeInfoMobile::after{transform:rotate(-45deg);}
-  @media(max-width:767px){#closeInfoMobile{display:flex;}}
+  @media(max-width:767px){
+    .infoBoxContent{
+      margin-top:-20px;  /* ← Sube toda la metadata justo debajo del borde superior */
+      padding-bottom:120px;
+    }
+  }
 
-  .metadata-block,.pair,.label,.value,.two-col,.contactCard,.thankYou,.infoLogoBig,.smallLogoContainer{text-align:center}
+  /* METADATA */
+  .metadata-block{margin-bottom:18px;text-align:center}
   .label{font-size:14px;opacity:.85;margin-bottom:4px}
   .value{font-size:22px;font-weight:bold}
-  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin:10px 0 22px}
+
+  /* ÁREA Y CONSTRUIBLE EN MISMO RENGLÓN */
+  .areaConstContainer{
+    display:flex;justify-content:center;gap:50px;margin:20px 0;
+  }
+
+  /* PRECIO Y ESTADO EN RENGLONES SEPARADOS Y CENTRADOS */
+  .priceEstadoContainer{
+    display:flex;flex-direction:column;align-items:center;margin:20px 0 30px;
+  }
+
   .contactCard{background:rgba(255,255,255,0.97);color:#333;padding:20px;border-radius:20px;margin-top:30px;box-shadow:0 8px 30px rgba(0,0,0,0.3);}
   .contactCard input,.contactCard textarea{width:100%;padding:11px 14px;margin:9px 0;border-radius:12px;border:1px solid #ccc;font-size:15px;background:#fff;box-sizing:border-box;}
   .contactCard textarea{height:78px;resize:none;}
@@ -83,12 +100,32 @@
   #sendBtn:hover{background:#e0c35a !important;transform:translateY(-3px);}
   #sendBtn:disabled{background:#999 !important;cursor:not-allowed;}
 
-  .thankYou{padding:20px;font-size:17px;color:#0b8b;background:#f0fff0;border-radius:12px;margin-top:10px;display:none;}
-  .infoLogoBig{width:68%;max-width:240px;margin:36px auto 16px;display:block;opacity:.95}
+  .thankYou{padding:20px;font-size:17px;color:#0b8b0b;background:#f0fff0;border-radius:12px;margin-top:10px;display:none;}
+
+  /* LOGO PRINCIPAL EN ESCRITORIO MÁS PEQUEÑO */
+  .infoLogoBig{
+    width:48%;max-width:180px;margin:36px auto 16px;display:block;opacity:.95;
+  }
+  @media(max-width:767px){
+    .infoLogoBig{width:68%;max-width:240px;}
+  }
+
   .smallLogoContainer{display:flex;justify-content:center;gap:32px;margin-top:18px}
-  .smallLogo{height:26px;opacity:.9}
-  #splashLogo{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:420px;max-width:86vw;z-index:1500;pointer-events:none;opacity:1;transition:opacity 2.5s ease;}
-  @media(max-width:767px){#splashLogo{width:280px}}
+  .smallLogo{height:26px;opacity:.9;cursor:pointer;transition:opacity .3s;}
+  .smallLogo:hover{opacity:1;}
+
+  /* SPLASH LOGO - 25PX MÁS ARRIBA EN MÓVIL */
+  #splashLogo{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:420px;max-width:86vw;z-index:1500;pointer-events:none;
+    opacity:1;transition:opacity 2.5s ease;
+  }
+  @media(max-width:767px){
+    #splashLogo{
+      width:280px;
+      transform:translate(-50%,-65%);
+    }
+  }
 </style>
 </head>
 <body>
@@ -100,7 +137,7 @@
 <button id="statusButton" class="topButton">STATUS</button>
 <button id="areaButton" class="topButton">ÁREA</button>
 
-<!-- LEYENDA ÁREA - COLORES NUEVOS -->
+<!-- LEYENDA ÁREA -->
 <div id="areaLegend">
   <div class="legend-row">
     <div class="item"><span style="background:#E65100"></span>400-599</div>
@@ -111,18 +148,23 @@
   </div>
 </div>
 
+<!-- PANEL INFO -->
 <div id="infoBox">
-  <button id="closeInfoMobile"></button>
   <div class="infoBoxContent">
     <div id="metaLote" class="metadata-block"></div>
-    <div class="two-col">
-      <div id="metaArea" class="pair"></div>
-      <div id="metaConst" class="pair"></div>
+
+    <!-- ÁREA Y CONSTRUIBLE EN MISMO RENGLÓN -->
+    <div class="areaConstContainer">
+      <div id="metaArea"></div>
+      <div id="metaConst"></div>
     </div>
-    <div class="two-col">
-      <div id="metaPrecio" class="pair"></div>
-      <div id="metaEstado" class="pair"></div>
+
+    <!-- PRECIO Y ESTADO EN RENGLONES SEPARADOS Y CENTRADOS -->
+    <div class="priceEstadoContainer">
+      <div id="metaPrecio"></div>
+      <div id="metaEstado"></div>
     </div>
+
     <div id="contactCard" class="contactCard" style="display:none;">
       <h3>¿Interesado en este lote?</h3>
       <form id="contactForm">
@@ -132,12 +174,12 @@
         <textarea id="message" placeholder="Mensaje (opcional)"></textarea>
         <button type="submit" id="sendBtn">RESERVAR</button>
       </form>
-      <div class="thankYou" id="thankYouMsg">Perfecto! Te contactaremos en menos de 24h</div>
+      <div class="thankYou" id="thankYouMsg">¡Perfecto! Te contactaremos en menos de 24h</div>
     </div>
     <img class="infoLogoBig" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
     <div class="smallLogoContainer">
-      <img class="smallLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/logo-ama.png">
-      <img class="smallLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/civis.png">
+      <a href="https://ama.org.mx/" target="_blank"><img class="smallLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/logo-ama.png" alt="AMA"></a>
+      <a href="https://civis.mx/" target="_blank"><img class="smallLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/civis.png" alt="CIVIS"></a>
     </div>
   </div>
 </div>
@@ -146,11 +188,11 @@
 
 <script>
 // =====================================================================
-// COLORES DE ÁREAS - CAMBIA AQUÍ LOS QUE QUIERAS (FÁCIL Y RÁPIDO)
+// COLORES DE ÁREAS - FÁCIL DE CAMBIAR
 // =====================================================================
 const AREA_COLORS = {
   400:  "#E65100",  // 400-599 → NARANJA OSCURO
-  600:  "#FFC107",  // 600-799 → AMARILLO PURO
+  600:  "#FFC107",  // 600-799 → AMARILLO
   800:  "#66BB6A",  // 800-999 → VERDE MENOS SATURADO
   1000: "#2196F3",  // 1000-1299 → AZUL
   1300: "#9C27B0"   // ≥1300 → MORADO
@@ -187,7 +229,7 @@ let selectedObject = null, originalMaterial = null;
 let currentLot = "";
 
 map.on("style.load", () => {
-  map.setPaintProperty('satellite','raster-opacity', 'raster-opacity',0.68);
+  map.setPaintProperty('satellite','raster-opacity',0.68);
   map.setPaintProperty('satellite','raster-brightness-min',0.08);
 
   map.addLayer({
@@ -275,6 +317,14 @@ map.on("style.load", () => {
           if(statusMode) applyStatusColors(false);
         };
 
+        // CERRAR TOCANDO FUERA EN MÓVIL
+        const infoBox = document.getElementById("infoBox");
+        infoBox.addEventListener("click", e => {
+          if(window.innerWidth <= 767 && e.target === infoBox){
+            infoBox.classList.remove("visible");
+          }
+        });
+
         map.on("click", e => {
           const hits = tb.queryRenderedFeatures(e.point);
           if(selectedObject && originalMaterial){ selectedObject.material = originalMaterial; selectedObject=null; }
@@ -294,7 +344,6 @@ map.on("style.load", () => {
           const isAvailable = raw.includes("disponible");
           const colorEstado = isAvailable ? "#00ff00" : (raw.includes("reserv")||raw.includes("apartado")) ? "#D4AF37" : "#ff0000";
 
-          // SIN BRILLO - SOLO COLOR PLANO
           obj.material = obj.material.clone();
           obj.material.color = new THREE.Color(colorEstado);
           obj.material.emissive = new THREE.Color(0x000000);
@@ -304,8 +353,9 @@ map.on("style.load", () => {
           obj.material.needsUpdate = true;
 
           document.getElementById("metaLote").innerHTML = `<div class="label">LOTE</div><div class="value">${currentLot}</div>`;
-          document.getElementById("metaArea").innerHTML = `<div class="label">ÁREA</div><div class="value">${d["Area"]||"—"} m²</div>`;
-          document.getElementById("metaConst").innerHTML = `<div class="label">CONSTRUIBLE</div><div class="value">${d["Construible"]||"—"} m²</div>`;
+          // SIN m²
+          document.getElementById("metaArea").innerHTML = `<div class="label">ÁREA</div><div class="value">${d["Area"]||"—"}</div>`;
+          document.getElementById("metaConst").innerHTML = `<div class="label">CONSTRUIBLE</div><div class="value">${d["Construible"]||"—"}</div>`;
           document.getElementById("metaPrecio").innerHTML = `<div class="label">PRECIO</div><div class="value">$ ${d["Precio"]||"—"}</div>`;
           document.getElementById("metaEstado").innerHTML = `<div class="label">ESTADO</div><div class="value" style="color:${colorEstado}">${isAvailable?"DISPONIBLE":raw.includes("reserv")||raw.includes("apartado")?"RESERVADO":"VENDIDO"}</div>`;
           if(isAvailable) document.getElementById("contactCard").style.display = "block";
@@ -352,7 +402,6 @@ const splashLogo = document.getElementById("splashLogo");
 
 function showLegend() { document.getElementById("areaLegend").style.display = "block"; }
 function hideLegend() { document.getElementById("areaLegend").style.display = "none"; }
-document.getElementById("closeInfoMobile").onclick = () => { document.getElementById("infoBox").classList.remove("visible"); };
 </script>
 </body>
 </html>
