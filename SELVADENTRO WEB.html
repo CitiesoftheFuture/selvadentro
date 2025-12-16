@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>SelvaDentro 3D - DARK MODE + LUZ REAL EN SELECCIÓN</title>
+<title>SelvaDentro 3D - IMAGEN AMENITY CLICK PARA FULLSCREEN + ZOOM</title>
 <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.js"></script>
@@ -10,7 +10,6 @@
 <style>
   body{margin:0;padding:0;background:#000;overflow:hidden;font-family:Arial,sans-serif}
   #map{position:absolute;top:0;bottom:0;width:100%;height:100%}
-
   .topButton{
     position:fixed;top:18px;padding:11px 26px;
     background:rgba(0,0,0,0.65);color:white;
@@ -21,16 +20,17 @@
   .topButton::before{content:"";position:absolute;inset:-10px;pointer-events:auto;}
   .topButton:hover{background:rgba(255,255,255,0.25)}
   .topButton.active{background:white !important;color:black !important}
-  #statusButton{left:50%;transform:translateX(-110%);}
-  #areaButton{left:50%;transform:translateX(10%);}
+  #statusButton{left:50%;transform:translateX(-220%);}
+  #areaButton{left:50%;transform:translateX(-80%);}
+  #amenitiesButton{left:50%;transform:translateX(60%);}
   #darkButton{right:20px;}
   @media(max-width:767px){
     .topButton{top:12px;padding:9px 22px;font-size:14px;}
-    #statusButton{transform:translateX(-120%);}
-    #areaButton{transform:translateX(20%);}
+    #statusButton{transform:translateX(-150%);}
+    #areaButton{transform:translateX(-50%);}
+    #amenitiesButton{transform:translateX(50%);}
     #darkButton{right:12px;top:12px;padding:9px 18px;font-size:13px;}
   }
-
   /* LEYENDA ÁREA */
   #areaLegend{
     position:fixed;top:74px;left:50%;transform:translateX(-50%);z-index:2000;
@@ -42,7 +42,6 @@
   #areaLegend .legend-row{display:flex;gap:12px;justify-content:center;align-items:center;}
   #areaLegend .item{display:flex;align-items:center;gap:6px;}
   #areaLegend span{display:inline-block;width:16px;height:16px;border-radius:3px;flex-shrink:0;}
-
   /* PANEL INFO */
   #infoBox{
     position:absolute;background:rgb(67,81,63);color:white;padding:26px 22px;
@@ -52,7 +51,6 @@
   }
   #infoBox.visible{opacity:.85;visibility:visible;transform:translateY(0)}
   body.dark-mode #infoBox{background:rgba(40,55,38,0.92);}
-
   @media(min-width:768px){#infoBox{top:30px;left:30px;max-height:95vh;overflow-y:auto;}}
   @media(max-width:767px){
     #infoBox{left:50%;bottom:0;transform:translateX(-50%) translateY(100%);width:100%;max-width:none;
@@ -64,7 +62,6 @@
       top:55% !important;
     }
   }
-
   .infoBoxContent{
     max-height:100%;overflow-y:auto;padding-right:8px;-webkit-overflow-scrolling:touch;
   }
@@ -74,26 +71,37 @@
       padding-bottom:120px;
     }
   }
-
   /* METADATA */
   .metadata-block{margin-bottom:18px;text-align:center}
   .label{font-size:14px;opacity:.85;margin-bottom:4px}
   .value{font-size:22px;font-weight:bold}
-
-  /* ÁREA Y CONSTRUIBLE EN MISMO RENGLÓN */
+  .amenity-value{font-size:32px;font-weight:bold;text-transform:uppercase;}
+  .amenity-image{
+    width:100%;max-width:320px;margin:20px auto 0;display:block;border-radius:16px;
+    box-shadow:0 8px 25px rgba(0,0,0,0.5);cursor:zoom-in;transition:transform .3s;
+  }
+  .amenity-image:hover{transform:scale(1.05);}
+  /* FULLSCREEN OVERLAY */
+  #fullscreenOverlay{
+    position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.95);
+    display:flex;justify-content:center;align-items:center;z-index:9999;visibility:hidden;opacity:0;
+    transition:opacity .4s ease;cursor:zoom-out;
+  }
+  #fullscreenOverlay.visible{visibility:visible;opacity:1;}
+  #fullscreenImage{
+    max-width:95vw;max-height:95vh;object-fit:contain;border-radius:12px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.8);
+  }
+  /* ÁREA Y CONSTRUIBLE */
   .areaConstContainer{
     display:flex;justify-content:center;gap:50px;margin:20px 0;
   }
-
-  /* PRECIO Y ESTADO EN RENGLONES SEPARADOS Y CENTRADOS */
   .priceEstadoContainer{
     display:flex;flex-direction:column;align-items:center;margin:20px 0 30px;
   }
-
   .contactCard{background:rgba(255,255,255,0.97);color:#333;padding:20px;border-radius:20px;margin-top:30px;box-shadow:0 8px 30px rgba(0,0,0,0.3);}
   .contactCard input,.contactCard textarea{width:100%;padding:11px 14px;margin:9px 0;border-radius:12px;border:1px solid #ccc;font-size:15px;background:#fff;box-sizing:border-box;}
   .contactCard textarea{height:78px;resize:none;}
-
   #sendBtn{
     width:100%;padding:16px;margin-top:18px;
     background:#D4AF37 !important;color:white !important;
@@ -103,22 +111,16 @@
   }
   #sendBtn:hover{background:#e0c35a !important;transform:translateY(-3px);}
   #sendBtn:disabled{background:#999 !important;cursor:not-allowed;}
-
   .thankYou{padding:20px;font-size:17px;color:#0b8b0b;background:#f0fff0;border-radius:12px;margin-top:10px;display:none;}
-
-  /* LOGO PRINCIPAL EN ESCRITORIO MÁS PEQUEÑO */
   .infoLogoBig{
     width:48%;max-width:180px;margin:36px auto 16px;display:block;opacity:.95;
   }
   @media(max-width:767px){
     .infoLogoBig{width:68%;max-width:240px;}
   }
-
   .smallLogoContainer{display:flex;justify-content:center;gap:32px;margin-top:18px}
   .smallLogo{height:26px;opacity:.9;cursor:pointer;transition:opacity .3s;}
   .smallLogo:hover{opacity:1;}
-
-  /* SPLASH LOGO - 25PX MÁS ARRIBA EN MÓVIL */
   #splashLogo{
     position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
     width:420px;max-width:86vw;z-index:1500;pointer-events:none;
@@ -133,16 +135,13 @@
 </style>
 </head>
 <body>
-
 <link href="https://cdn.jsdelivr.net/gh/jscastro76/threebox@v.2.2.2/dist/threebox.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/gh/jscastro76/threebox@v.2.2.2/dist/threebox.min.js"></script>
-
 <div id="map"></div>
 <button id="statusButton" class="topButton">STATUS</button>
 <button id="areaButton" class="topButton">ÁREA</button>
+<button id="amenitiesButton" class="topButton">AMENITIES</button>
 <button id="darkButton" class="topButton">DARK</button>
-
-<!-- LEYENDA ÁREA -->
 <div id="areaLegend">
   <div class="legend-row">
     <div class="item"><span style="background:#E65100"></span>400-599</div>
@@ -152,8 +151,6 @@
     <div class="item"><span style="background:#9C27B0"></span>≥1300</div>
   </div>
 </div>
-
-<!-- PANEL INFO -->
 <div id="infoBox">
   <div class="infoBoxContent">
     <div id="metaLote" class="metadata-block"></div>
@@ -165,6 +162,7 @@
       <div id="metaPrecio"></div>
       <div id="metaEstado" style="margin-top:8px;"></div>
     </div>
+    <img id="amenityImage" class="amenity-image" style="display:none;" alt="Amenity">
     <div id="contactCard" class="contactCard" style="display:none;">
       <h3>¿Interesado en este lote?</h3>
       <form id="contactForm">
@@ -183,21 +181,15 @@
     </div>
   </div>
 </div>
-
+<!-- FULLSCREEN OVERLAY -->
+<div id="fullscreenOverlay">
+  <img id="fullscreenImage" src="" alt="Fullscreen Amenity">
+</div>
 <img id="splashLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
-
 <script>
-// =====================================================================
-// COLORES DE ÁREAS - FÁCIL DE CAMBIAR
-// =====================================================================
-const AREA_COLORS = {
-  400:  "#E65100",  // 400-599 → NARANJA OSCURO
-  600:  "#FFC107",  // 600-799 → AMARILLO
-  800:  "#66BB6A",  // 800-999 → VERDE MENOS SATURADO
-  1000: "#2196F3",  // 1000-1299 → AZUL
-  1300: "#9C27B0"   // ≥1300 → MORADO
-};
-// =====================================================================
+const AREA_COLORS = {400: "#E65100",600: "#FFC107",800: "#66BB6A",1000: "#2196F3",1300: "#9C27B0"};
+const AMENITIES_COLOR = "#2196F3";
+const REPO_BASE = "https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/";
 
 mapboxgl.accessToken = "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyNGtyYmtvIn0.f8f_PAURro1hU-sh_xnAuA";
 emailjs.init('YOUR_PUBLIC_KEY_HERE');
@@ -207,7 +199,7 @@ const TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
 function getInitialCamera(){
   const w = window.innerWidth;
   if(w > 1200) return {center:{lng:-87.421729,lat:20.296090},zoom:14.44,pitch:69,bearing:90};
-  if(w > 768)  return {center:{lng:-87.421729,lat:20.296090},zoom:14.5,pitch:69,bearing:90};
+  if(w > 768) return {center:{lng:-87.421729,lat:20.296090},zoom:14.5,pitch:69,bearing:90};
   return {center:{lng:-87.434816,lat:20.281730},zoom:14.14,pitch:69,bearing:180};
 }
 
@@ -223,24 +215,23 @@ const map = new mapboxgl.Map({
 });
 
 const tb = window.tb = new Threebox(map, map.getCanvas().getContext('webgl'), {defaultLights: false});
-let statusMode = false, areaMode = false, darkMode = false;
+
+let statusMode = false, areaMode = false, amenitiesMode = false, darkMode = false;
 let originalMaterials = new WeakMap();
 let selectedObject = null, originalMaterial = null;
 let currentLot = "";
-let selectionLight = null; // Luz real del lote seleccionado
-let ambientLight = null; // Referencia para bajar en dark mode
+let selectionLight = null;
+let ambientLight = null;
 
 map.on("style.load", () => {
   map.setPaintProperty('satellite','raster-opacity',0.68);
   map.setPaintProperty('satellite','raster-brightness-min',0.08);
-
   map.addLayer({
     id: "custom-threebox-model", type: "custom", renderingMode: "3d",
     onAdd: function(){
       const shadowPlane = new THREE.Mesh(new THREE.PlaneGeometry(15000,15000), new THREE.ShadowMaterial({opacity:0.95}));
       shadowPlane.rotation.x = -Math.PI/2; shadowPlane.position.y = 3.8; shadowPlane.receiveShadow = true;
       tb.world.add(shadowPlane);
-
       tb.world.add(new THREE.HemisphereLight(0xffffff,0x88aa88,0.35));
       const sun = new THREE.DirectionalLight(0xffffff,0.95);
       sun.position.set(1800,3000,2200); sun.castShadow = true;
@@ -248,8 +239,6 @@ map.on("style.load", () => {
       sun.shadow.camera.left = sun.shadow.camera.bottom = -2800;
       sun.shadow.camera.right = sun.shadow.camera.top = 2800;
       tb.world.add(sun);
-
-      // AmbientLight con referencia
       ambientLight = new THREE.AmbientLight(0xffffff, 0.01);
       tb.world.add(ambientLight);
 
@@ -277,7 +266,7 @@ map.on("style.load", () => {
         function applyStatusColors(enable){
           statusMode = enable;
           document.getElementById("statusButton").classList.toggle("active", enable);
-          if(enable){ areaMode=false; document.getElementById("areaButton").classList.remove("active"); hideLegend(); }
+          if(enable){ areaMode=false; amenitiesMode=false; document.getElementById("areaButton").classList.remove("active"); document.getElementById("amenitiesButton").classList.remove("active"); hideLegend(); }
           if(!enable){ resetAllMaterials(); return; }
           model.traverse(c=>{
             if(c.isMesh && c.userData?.Status){
@@ -292,7 +281,7 @@ map.on("style.load", () => {
         function applyAreaColors(enable){
           areaMode = enable;
           document.getElementById("areaButton").classList.toggle("active", enable);
-          if(enable){ statusMode=false; document.getElementById("statusButton").classList.remove("active"); }
+          if(enable){ statusMode=false; amenitiesMode=false; document.getElementById("statusButton").classList.remove("active"); document.getElementById("amenitiesButton").classList.remove("active"); }
           if(!enable){ resetAllMaterials(); hideLegend(); return; }
           model.traverse(c=>{
             if(c.isMesh && c.userData?.Area){
@@ -310,42 +299,58 @@ map.on("style.load", () => {
           if(enable) showLegend();
         }
 
-        // DARK MODE TOGGLE
+        function applyAmenitiesColors(enable){
+          amenitiesMode = enable;
+          document.getElementById("amenitiesButton").classList.toggle("active", enable);
+          if(enable){ statusMode=false; areaMode=false; document.getElementById("statusButton").classList.remove("active"); document.getElementById("areaButton").classList.remove("active"); hideLegend(); }
+          if(!enable){ resetAllMaterials(); return; }
+          model.traverse(c=>{
+            if(c.isMesh && c.userData?.AMENITIES){
+              c.material = c.material.clone();
+              c.material.color = new THREE.Color(AMENITIES_COLOR);
+            }
+          });
+        }
+
         document.getElementById("darkButton").onclick = () => {
           darkMode = !darkMode;
           document.body.classList.toggle("dark-mode", darkMode);
           document.getElementById("darkButton").classList.toggle("active", darkMode);
-
           if(darkMode){
             map.setPaintProperty('satellite','raster-opacity',0.4);
             map.setPaintProperty('satellite','raster-brightness-min',-0.2);
-            ambientLight.intensity = 0.003;  // Baja luz ambiental para resaltar selección
+            ambientLight.intensity = 0.003;
           } else {
             map.setPaintProperty('satellite','raster-opacity',0.68);
             map.setPaintProperty('satellite','raster-brightness-min',0.08);
             ambientLight.intensity = 0.01;
           }
-
-          // Reaplicar luz de selección si hay uno seleccionado
           if(selectedObject){
             selectionLight.intensity = darkMode ? 40 : 25;
           }
         };
 
         document.getElementById("statusButton").onclick = () => {
-          if(document.getElementById("infoBox").classList.contains("visible") && window.innerWidth <= 767)
-            document.getElementById("infoBox").classList.remove("visible");
+          if(window.innerWidth <= 767 && document.getElementById("infoBox").classList.contains("visible")) document.getElementById("infoBox").classList.remove("visible");
           applyStatusColors(!statusMode);
           if(areaMode) applyAreaColors(false);
-        };
-        document.getElementById("areaButton").onclick = () => {
-          if(document.getElementById("infoBox").classList.contains("visible") && window.innerWidth <= 767)
-            document.getElementById("infoBox").classList.remove("visible");
-          applyAreaColors(!areaMode);
-          if(statusMode) applyStatusColors(false);
+          if(amenitiesMode) applyAmenitiesColors(false);
         };
 
-        // CERRAR TOCANDO FUERA EN MÓVIL
+        document.getElementById("areaButton").onclick = () => {
+          if(window.innerWidth <= 767 && document.getElementById("infoBox").classList.contains("visible")) document.getElementById("infoBox").classList.remove("visible");
+          applyAreaColors(!areaMode);
+          if(statusMode) applyStatusColors(false);
+          if(amenitiesMode) applyAmenitiesColors(false);
+        };
+
+        document.getElementById("amenitiesButton").onclick = () => {
+          if(window.innerWidth <= 767 && document.getElementById("infoBox").classList.contains("visible")) document.getElementById("infoBox").classList.remove("visible");
+          applyAmenitiesColors(!amenitiesMode);
+          if(statusMode) applyStatusColors(false);
+          if(areaMode) applyAreaColors(false);
+        };
+
         const infoBox = document.getElementById("infoBox");
         infoBox.addEventListener("click", e => {
           if(window.innerWidth <= 767 && e.target === infoBox){
@@ -353,30 +358,74 @@ map.on("style.load", () => {
           }
         });
 
+        const amenityImg = document.getElementById("amenityImage");
+        const fullscreenOverlay = document.getElementById("fullscreenOverlay");
+        const fullscreenImage = document.getElementById("fullscreenImage");
+
+        // Click en imagen pequeña → fullscreen
+        amenityImg.onclick = () => {
+          fullscreenImage.src = amenityImg.src;
+          fullscreenOverlay.classList.add("visible");
+        };
+
+        // Click en overlay → cerrar
+        fullscreenOverlay.onclick = () => {
+          fullscreenOverlay.classList.remove("visible");
+        };
+
         map.on("click", e => {
           const hits = tb.queryRenderedFeatures(e.point);
           if(selectionLight){ tb.remove(selectionLight); selectionLight = null; }
           if(selectedObject && originalMaterial){ selectedObject.material = originalMaterial; selectedObject = null; }
-
           document.getElementById("infoBox").classList.remove("visible");
           document.getElementById("contactCard").style.display = "none";
-          if(!hits.length) return;
+          amenityImg.style.display = "none";
+          fullscreenOverlay.classList.remove("visible");
+
           if(statusMode) applyStatusColors(false);
           if(areaMode) applyAreaColors(false);
+          if(amenitiesMode) applyAmenitiesColors(false);
+
+          if(!hits.length) return;
 
           const obj = hits[0].object;
           selectedObject = obj;
           originalMaterial = obj.material.clone();
           const d = {...(obj.userData||{}), ...(obj.userData?.extras||{})};
-          currentLot = d["Index"] || "—";
 
-          const raw = (d["Status"]||"").toString().toLowerCase();
-          const isAvailable = raw.includes("disponible");
-          const colorEstado = isAvailable ? "#00ff00" : (raw.includes("reserv")||raw.includes("apartado")) ? "#D4AF37" : "#ff0000";
-          const estadoTexto = isAvailable ? "DISPONIBLE" : (raw.includes("reserv")||raw.includes("apartado")) ? "RESERVADO" : "VENDIDO";
+          let lightColor;
+          if(d.AMENITIES){
+            const rawName = d.AMENITIES.toString().trim();
+            const amenityName = rawName.toUpperCase();
+            const slug = rawName.toLowerCase().replace(/\s+/g, '_') + ".png";
+            const imgUrl = REPO_BASE + slug;
 
-          // LUZ REAL QUE ILUMINA Y GENERA SOMBRAS
-          const lightColor = new THREE.Color(colorEstado);
+            document.getElementById("metaLote").innerHTML = `<div class="value amenity-value">${amenityName}</div>`;
+            document.getElementById("metaArea").innerHTML = "";
+            document.getElementById("metaConst").innerHTML = "";
+            document.getElementById("metaPrecio").innerHTML = "";
+            document.getElementById("metaEstado").innerHTML = "";
+
+            amenityImg.src = imgUrl;
+            amenityImg.style.display = "block";
+            lightColor = new THREE.Color(AMENITIES_COLOR);
+          } else {
+            currentLot = d["Index"] || "—";
+            const raw = (d["Status"]||"").toString().toLowerCase();
+            const isAvailable = raw.includes("disponible");
+            const colorEstado = isAvailable ? "#00ff00" : (raw.includes("reserv")||raw.includes("apartado")) ? "#D4AF37" : "#ff0000";
+            const estadoTexto = isAvailable ? "DISPONIBLE" : (raw.includes("reserv")||raw.includes("apartado")) ? "RESERVADO" : "VENDIDO";
+
+            document.getElementById("metaLote").innerHTML = `<div class="label">LOTE</div><div class="value">${currentLot}</div>`;
+            document.getElementById("metaArea").innerHTML = `<div class="label">ÁREA</div><div class="value">${d["Area"]||"—"}</div>`;
+            document.getElementById("metaConst").innerHTML = `<div class="label">CONSTRUIBLE</div><div class="value">${d["Construible"]||"—"}</div>`;
+            document.getElementById("metaPrecio").innerHTML = `<div class="label">PRECIO</div><div class="value">$ ${d["Precio"]||"—"}</div>`;
+            document.getElementById("metaEstado").innerHTML = `<div class="value" style="color:${colorEstado};font-size:26px;">${estadoTexto}</div>`;
+            if(isAvailable) document.getElementById("contactCard").style.display = "block";
+
+            lightColor = new THREE.Color(colorEstado);
+          }
+
           selectionLight = new THREE.PointLight(lightColor, darkMode ? 40 : 25, 80, 2);
           const pos = obj.getWorldPosition(new THREE.Vector3());
           pos.y += 20;
@@ -388,18 +437,10 @@ map.on("style.load", () => {
           selectionLight.shadow.camera.far = 500;
           tb.add(selectionLight);
 
-          // Leve emissive para glow interno
           obj.material = obj.material.clone();
           obj.material.emissive = lightColor;
           obj.material.emissiveIntensity = darkMode ? 3 : 1.5;
 
-          // Metadata
-          document.getElementById("metaLote").innerHTML = `<div class="label">LOTE</div><div class="value">${currentLot}</div>`;
-          document.getElementById("metaArea").innerHTML = `<div class="label">ÁREA</div><div class="value">${d["Area"]||"—"}</div>`;
-          document.getElementById("metaConst").innerHTML = `<div class="label">CONSTRUIBLE</div><div class="value">${d["Construible"]||"—"}</div>`;
-          document.getElementById("metaPrecio").innerHTML = `<div class="label">PRECIO</div><div class="value">$ ${d["Precio"]||"—"}</div>`;
-          document.getElementById("metaEstado").innerHTML = `<div class="value" style="color:${colorEstado};font-size:26px;">${estadoTexto}</div>`;
-          if(isAvailable) document.getElementById("contactCard").style.display = "block";
           document.getElementById("infoBox").classList.add("visible");
           if(!areaMode) hideLegend();
         });
@@ -428,7 +469,6 @@ map.on("style.load", () => {
   });
 });
 
-// Splash logo fade
 let splashFaded = false;
 const splashLogo = document.getElementById("splashLogo");
 ["zoomstart","dragstart","rotatestart","pitchstart","touchstart","mousedown"].forEach(ev =>
