@@ -221,7 +221,6 @@
   <img id="fullscreenImage" src="" alt="Fullscreen Amenity">
 </div>
 <img id="splashLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
-
 <script>
 const AREA_COLORS = {400: "#E65100",600: "#FFC107",800: "#66BB6A",1000: "#2196F3",1300: "#9C27B0"};
 const AMENITIES_COLOR = "#2196F3";
@@ -254,8 +253,8 @@ let ambientLight = null;
 let treesGroup = null;
 let treesModel = null;
 let terrainModel = null;
-let amenityTriangles = [];
-
+let triangulosGroup = null;
+let triangulosModel = null;
 map.on("style.load", () => {
   map.setPaintProperty('satellite','raster-opacity',0.68);
   map.setPaintProperty('satellite','raster-brightness-min',0.08);
@@ -274,20 +273,16 @@ map.on("style.load", () => {
       tb.world.add(sun);
       ambientLight = new THREE.AmbientLight(0xffffff, 0.01);
       tb.world.add(ambientLight);
-
       tb.loadObj({
         obj:"https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVA3D.glb",
         type:"gltf", scale:1, units:"meters", rotation:{x:90,y:-90,z:0}
       }, model => {
         model.setCoords([-87.43715249608606,20.30514220104367]);
         model.setRotation({x:0,y:0,z:270});
-        // Apply final terrain position
         model.translateX(-0.057);
         model.translateY(-0.026);
         model.translateZ(-0.025);
-
         terrainModel = model;
-
         model.traverse(c => {
           if(c.isMesh && c.material){
             c.castShadow = c.receiveShadow = true;
@@ -298,8 +293,6 @@ map.on("style.load", () => {
           }
         });
         tb.add(model);
-
-        // Load trees with final position
         tb.loadObj({
           obj: "https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/ARBOLES_NUEVOS.glb",
           type: "gltf",
@@ -312,16 +305,14 @@ map.on("style.load", () => {
           loadedTreesModel.translateX(-1.22);
           loadedTreesModel.translateY(1.301);
           loadedTreesModel.translateZ(0);
-
           treesModel = loadedTreesModel;
-
           treesGroup = new THREE.Group();
           treesGroup.add(treesModel);
           treesModel.traverse(c => {
             if (c.isMesh && c.material) {
               c.castShadow = c.receiveShadow = true;
               c.material = c.material.clone();
-              c.material.color.multiplyScalar(1.55);
+              c.material.color.multiplyScalar(1.35);
               c.material.metalness = 0.02;
               c.material.roughness = 0.85;
               originalTreeMaterials.set(c, c.material.clone());
@@ -330,43 +321,47 @@ map.on("style.load", () => {
           tb.add(treesGroup);
           treesGroup.visible = true;
           applyTreesStyle(true);
+          tb.loadObj({
+            obj: "https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/triangulos.glb",
+            type: "gltf",
+            scale: 1,
+            units: "meters",
+            rotation: {x: 90, y: -90, z: 0}
+          }, loadedTriangulosModel => {
+            loadedTriangulosModel.setCoords([-87.43715249608606, 20.30514220104367]);
+            loadedTriangulosModel.setRotation({x: 0, y: 0, z: 270});
+            loadedTriangulosModel.translateX(-0.057);
+            loadedTriangulosModel.translateY(-0.026);
+            loadedTriangulosModel.translateZ(-0.025);
+            triangulosModel = loadedTriangulosModel;
+            triangulosGroup = new THREE.Group();
+            triangulosGroup.add(triangulosModel);
+            triangulosModel.traverse(c => {
+              if (c.isMesh && c.material) {
+                c.castShadow = c.receiveShadow = true;
+                c.material = new THREE.MeshPhongMaterial({
+                  color: 0x2196F3,
+                  emissive: 0x0D47A1,
+                  emissiveIntensity: 0.7,
+                  specular: 0xffffff,
+                  shininess: 100,
+                  side: THREE.DoubleSide
+                });
+                c.geometry.center();
+              }
+            });
+            tb.add(triangulosGroup);
+            triangulosGroup.visible = false;
+          });
         });
-
         function resetAllMaterials(){
           terrainModel.traverse(c=>{if(c.isMesh&&originalMaterials.has(c)){c.material=originalMaterials.get(c).clone();}});
         }
-
         function toggleAmenityTriangles(enable) {
-          amenityTriangles.forEach(t => tb.remove(t));
-          amenityTriangles = [];
-          if (!enable) return;
-          terrainModel.traverse(c => {
-            if (c.isMesh && c.userData?.AMENITIES) {
-              const triangleShape = new THREE.Shape();
-              triangleShape.moveTo(0, 15);
-              triangleShape.lineTo(-12, -8);
-              triangleShape.lineTo(12, -8);
-              triangleShape.lineTo(0, 15);
-              const geometry = new THREE.ShapeGeometry(triangleShape);
-              const material = new THREE.MeshPhongMaterial({
-                color: 0x0099ff,
-                emissive: 0x004488,
-                emissiveIntensity: 0.6,
-                specular: 0xffffff,
-                shininess: 100,
-                side: THREE.DoubleSide
-              });
-              const triangle = new THREE.Mesh(geometry, material);
-              const pos = c.getWorldPosition(new THREE.Vector3());
-              pos.y += 30;
-              triangle.position.copy(pos);
-              triangle.rotation.x = Math.PI;
-              tb.add(triangle);
-              amenityTriangles.push(triangle);
-            }
-          });
+          if (triangulosGroup) {
+            triangulosGroup.visible = enable;
+          }
         }
-
         function applyAmenitiesColors(enable){
           amenitiesMode = enable;
           document.getElementById("amenitiesButton").classList.toggle("active", enable);
@@ -379,6 +374,7 @@ map.on("style.load", () => {
           if(!enable){
             resetAllMaterials();
             toggleAmenityTriangles(false);
+            map.triggerRepaint();
             return;
           }
           terrainModel.traverse(c=>{
@@ -388,21 +384,24 @@ map.on("style.load", () => {
             }
           });
           toggleAmenityTriangles(true);
+          map.triggerRepaint();
         }
-
         const originalUpdate = tb.update;
         tb.update = function() {
           originalUpdate.call(tb);
-          amenityTriangles.forEach(triangle => {
-            triangle.rotation.z += 0.005;
-          });
+          if (triangulosGroup && triangulosGroup.visible) {
+            triangulosGroup.traverse(c => {
+              if (c.isMesh) {
+                c.rotation.z += 0.005;
+              }
+            });
+          }
         };
-
         function applyStatusColors(enable){
           statusMode = enable;
           document.getElementById("statusButton").classList.toggle("active", enable);
           if(enable){ areaMode=false; amenitiesMode=false; document.getElementById("areaButton").classList.remove("active"); document.getElementById("amenitiesButton").classList.remove("active"); hideLegend(); }
-          if(!enable){ resetAllMaterials(); return; }
+          if(!enable){ resetAllMaterials(); map.triggerRepaint(); return; }
           terrainModel.traverse(c=>{
             if(c.isMesh && c.userData?.Status){
               const s = c.userData.Status.toString().toLowerCase();
@@ -411,13 +410,13 @@ map.on("style.load", () => {
               c.material.color = new THREE.Color(col);
             }
           });
+          map.triggerRepaint();
         }
-
         function applyAreaColors(enable){
           areaMode = enable;
           document.getElementById("areaButton").classList.toggle("active", enable);
           if(enable){ statusMode=false; amenitiesMode=false; document.getElementById("statusButton").classList.remove("active"); document.getElementById("amenitiesButton").classList.remove("active"); }
-          if(!enable){ resetAllMaterials(); hideLegend(); return; }
+          if(!enable){ resetAllMaterials(); hideLegend(); map.triggerRepaint(); return; }
           terrainModel.traverse(c=>{
             if(c.isMesh && c.userData?.Area){
               const a = parseFloat(c.userData.Area);
@@ -432,8 +431,8 @@ map.on("style.load", () => {
             }
           });
           if(enable) showLegend();
+          map.triggerRepaint();
         }
-
         function applyTreesStyle(enable) {
           if (!treesGroup) return;
           treesGroup.traverse(c => {
@@ -441,8 +440,8 @@ map.on("style.load", () => {
               if (enable) {
                 let mat = originalTreeMaterials.get(c).clone();
                 let gray = mat.color.r * 0.299 + mat.color.g * 0.587 + mat.color.b * 0.114;
-                mat.color.lerp(new THREE.Color(gray, gray, gray), 0.9);
-                mat.color.multiplyScalar(0.6);
+                mat.color.lerp(new THREE.Color(gray, gray, gray), 0.85);
+                mat.color.multiplyScalar(0.5);
                 mat.envMapIntensity = 0.4;
                 c.material = mat;
               } else {
@@ -450,8 +449,8 @@ map.on("style.load", () => {
               }
             }
           });
+          map.triggerRepaint();
         }
-
         document.getElementById("darkButton").onclick = () => {
           darkMode = !darkMode;
           document.body.classList.toggle("dark-mode", darkMode);
@@ -468,29 +467,26 @@ map.on("style.load", () => {
           if(selectedObject){
             selectionLight.intensity = darkMode ? 40 : 25;
           }
+          map.triggerRepaint();
         };
-
         document.getElementById("statusButton").onclick = () => {
           if(window.innerWidth <= 767 && document.getElementById("infoBox").classList.contains("visible")) document.getElementById("infoBox").classList.remove("visible");
           applyStatusColors(!statusMode);
           if(areaMode) applyAreaColors(false);
           if(amenitiesMode) applyAmenitiesColors(false);
         };
-
         document.getElementById("areaButton").onclick = () => {
           if(window.innerWidth <= 767 && document.getElementById("infoBox").classList.contains("visible")) document.getElementById("infoBox").classList.remove("visible");
           applyAreaColors(!areaMode);
           if(statusMode) applyStatusColors(false);
           if(amenitiesMode) applyAmenitiesColors(false);
         };
-
         document.getElementById("amenitiesButton").onclick = () => {
           if(window.innerWidth <= 767 && document.getElementById("infoBox").classList.contains("visible")) document.getElementById("infoBox").classList.remove("visible");
           applyAmenitiesColors(!amenitiesMode);
           if(statusMode) applyStatusColors(false);
           if(areaMode) applyAreaColors(false);
         };
-
         document.getElementById("treesButton").onclick = () => {
           treesMode = !treesMode;
           document.getElementById("treesButton").classList.toggle("active", treesMode);
@@ -499,14 +495,12 @@ map.on("style.load", () => {
             applyTreesStyle(treesMode);
           }
         };
-
         const infoBox = document.getElementById("infoBox");
         infoBox.addEventListener("click", e => {
           if(window.innerWidth <= 767 && e.target === infoBox){
             infoBox.classList.remove("visible");
           }
         });
-
         const amenityImg = document.getElementById("amenityImage");
         const fullscreenOverlay = document.getElementById("fullscreenOverlay");
         const fullscreenImage = document.getElementById("fullscreenImage");
@@ -517,7 +511,6 @@ map.on("style.load", () => {
         fullscreenOverlay.onclick = () => {
           fullscreenOverlay.classList.remove("visible");
         };
-
         document.getElementById("reserveBtn").onclick = () => {
           document.getElementById("reserveBtn").style.display = "none";
           document.getElementById("reserveForm").style.display = "block";
@@ -525,7 +518,6 @@ map.on("style.load", () => {
             infoBox.scrollIntoView({behavior: "smooth", block: "center"});
           }
         };
-
         document.getElementById("sendReserveBtn").onclick = () => {
           const name = document.getElementById("reserveName").value.trim();
           const email = document.getElementById("reserveEmail").value.trim();
@@ -536,7 +528,6 @@ map.on("style.load", () => {
           document.getElementById("reserveForm").style.display = "none";
           document.getElementById("thankYouMsg").style.display = "block";
         };
-
         map.on("click", e => {
           const hits = tb.queryRenderedFeatures(e.point);
           if(selectionLight){ tb.remove(selectionLight); selectionLight = null; }
@@ -608,13 +599,13 @@ map.on("style.load", () => {
             }
           }, 400);
           if(!areaMode) hideLegend();
+          map.triggerRepaint();
         });
       });
     },
     render: () => tb.update()
   });
 });
-
 let splashFaded = false;
 const splashLogo = document.getElementById("splashLogo");
 ["zoomstart","dragstart","rotatestart","pitchstart","touchstart","mousedown"].forEach(ev =>
@@ -626,7 +617,6 @@ const splashLogo = document.getElementById("splashLogo");
     }
   })
 );
-
 function showLegend() { document.getElementById("areaLegend").style.display = "block"; }
 function hideLegend() { document.getElementById("areaLegend").style.display = "none"; }
 </script>
