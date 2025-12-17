@@ -61,7 +61,7 @@
   }
   #infoBox.visible{opacity:.85;visibility:visible;transform:translateY(0)}
   body.dark-mode #infoBox{background:rgba(40,55,38,0.92);}
-  @media(min-width:768px){#infoBox{top:55px;left:30px;max-height:95vh;overflow-y:auto;}} /* ← bajado 25px */
+  @media(min-width:768px){#infoBox{top:55px;left:30px;max-height:95vh;overflow-y:auto;}}
   @media(max-width:767px){
     #infoBox{left:50%;bottom:0;transform:translateX(-50%) translateY(100%);width:100%;max-width:none;
       border-radius:32px 32px 0 0;
@@ -221,6 +221,7 @@
   <img id="fullscreenImage" src="" alt="Fullscreen Amenity">
 </div>
 <img id="splashLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
+
 <script>
 const AREA_COLORS = {400: "#E65100",600: "#FFC107",800: "#66BB6A",1000: "#2196F3",1300: "#9C27B0"};
 const AMENITIES_COLOR = "#2196F3";
@@ -251,7 +252,10 @@ let currentLot = "";
 let selectionLight = null;
 let ambientLight = null;
 let treesGroup = null;
+let treesModel = null;
+let terrainModel = null;
 let amenityTriangles = [];
+
 map.on("style.load", () => {
   map.setPaintProperty('satellite','raster-opacity',0.68);
   map.setPaintProperty('satellite','raster-brightness-min',0.08);
@@ -270,12 +274,20 @@ map.on("style.load", () => {
       tb.world.add(sun);
       ambientLight = new THREE.AmbientLight(0xffffff, 0.01);
       tb.world.add(ambientLight);
+
       tb.loadObj({
         obj:"https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVA3D.glb",
         type:"gltf", scale:1, units:"meters", rotation:{x:90,y:-90,z:0}
       }, model => {
         model.setCoords([-87.43715249608606,20.30514220104367]);
         model.setRotation({x:0,y:0,z:270});
+        // Apply final terrain position
+        model.translateX(-0.057);
+        model.translateY(-0.026);
+        model.translateZ(-0.025);
+
+        terrainModel = model;
+
         model.traverse(c => {
           if(c.isMesh && c.material){
             c.castShadow = c.receiveShadow = true;
@@ -286,18 +298,23 @@ map.on("style.load", () => {
           }
         });
         tb.add(model);
+
+        // Load trees with final position
         tb.loadObj({
           obj: "https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/ARBOLES_NUEVOS.glb",
           type: "gltf",
           scale: 1,
           units: "meters",
           rotation: {x: 90, y: -90, z: 0}
-        }, treesModel => {
-          treesModel.setCoords([-87.43715249608606, 20.30514220104367]);
-          treesModel.setRotation({x: 0, y: 0, z: 270});
-          treesModel.translateX(-1.05);
-          treesModel.translateY(-6.08);
-          treesModel.translateZ(0);
+        }, loadedTreesModel => {
+          loadedTreesModel.setCoords([-87.43715249608606, 20.30514220104367]);
+          loadedTreesModel.setRotation({x: 0, y: 0, z: 270});
+          loadedTreesModel.translateX(-1.22);
+          loadedTreesModel.translateY(1.301);
+          loadedTreesModel.translateZ(0);
+
+          treesModel = loadedTreesModel;
+
           treesGroup = new THREE.Group();
           treesGroup.add(treesModel);
           treesModel.traverse(c => {
@@ -314,14 +331,16 @@ map.on("style.load", () => {
           treesGroup.visible = true;
           applyTreesStyle(true);
         });
+
         function resetAllMaterials(){
-          model.traverse(c=>{if(c.isMesh&&originalMaterials.has(c)){c.material=originalMaterials.get(c).clone();}});
+          terrainModel.traverse(c=>{if(c.isMesh&&originalMaterials.has(c)){c.material=originalMaterials.get(c).clone();}});
         }
+
         function toggleAmenityTriangles(enable) {
           amenityTriangles.forEach(t => tb.remove(t));
           amenityTriangles = [];
           if (!enable) return;
-          model.traverse(c => {
+          terrainModel.traverse(c => {
             if (c.isMesh && c.userData?.AMENITIES) {
               const triangleShape = new THREE.Shape();
               triangleShape.moveTo(0, 15);
@@ -347,21 +366,22 @@ map.on("style.load", () => {
             }
           });
         }
+
         function applyAmenitiesColors(enable){
           amenitiesMode = enable;
           document.getElementById("amenitiesButton").classList.toggle("active", enable);
-          if(enable){ 
-            statusMode=false; areaMode=false; 
-            document.getElementById("statusButton").classList.remove("active"); 
-            document.getElementById("areaButton").classList.remove("active"); 
-            hideLegend(); 
+          if(enable){
+            statusMode=false; areaMode=false;
+            document.getElementById("statusButton").classList.remove("active");
+            document.getElementById("areaButton").classList.remove("active");
+            hideLegend();
           }
-          if(!enable){ 
-            resetAllMaterials(); 
+          if(!enable){
+            resetAllMaterials();
             toggleAmenityTriangles(false);
-            return; 
+            return;
           }
-          model.traverse(c=>{
+          terrainModel.traverse(c=>{
             if(c.isMesh && c.userData?.AMENITIES){
               c.material = c.material.clone();
               c.material.color = new THREE.Color(AMENITIES_COLOR);
@@ -369,6 +389,7 @@ map.on("style.load", () => {
           });
           toggleAmenityTriangles(true);
         }
+
         const originalUpdate = tb.update;
         tb.update = function() {
           originalUpdate.call(tb);
@@ -376,12 +397,13 @@ map.on("style.load", () => {
             triangle.rotation.z += 0.005;
           });
         };
+
         function applyStatusColors(enable){
           statusMode = enable;
           document.getElementById("statusButton").classList.toggle("active", enable);
           if(enable){ areaMode=false; amenitiesMode=false; document.getElementById("areaButton").classList.remove("active"); document.getElementById("amenitiesButton").classList.remove("active"); hideLegend(); }
           if(!enable){ resetAllMaterials(); return; }
-          model.traverse(c=>{
+          terrainModel.traverse(c=>{
             if(c.isMesh && c.userData?.Status){
               const s = c.userData.Status.toString().toLowerCase();
               const col = s.includes("disponible") ? "#00ff00" : (s.includes("reserv")||s.includes("apartado")) ? "#D4AF37" : "#ff0000";
@@ -390,12 +412,13 @@ map.on("style.load", () => {
             }
           });
         }
+
         function applyAreaColors(enable){
           areaMode = enable;
           document.getElementById("areaButton").classList.toggle("active", enable);
           if(enable){ statusMode=false; amenitiesMode=false; document.getElementById("statusButton").classList.remove("active"); document.getElementById("amenitiesButton").classList.remove("active"); }
           if(!enable){ resetAllMaterials(); hideLegend(); return; }
-          model.traverse(c=>{
+          terrainModel.traverse(c=>{
             if(c.isMesh && c.userData?.Area){
               const a = parseFloat(c.userData.Area);
               let col = "#888888";
@@ -410,6 +433,7 @@ map.on("style.load", () => {
           });
           if(enable) showLegend();
         }
+
         function applyTreesStyle(enable) {
           if (!treesGroup) return;
           treesGroup.traverse(c => {
@@ -427,6 +451,7 @@ map.on("style.load", () => {
             }
           });
         }
+
         document.getElementById("darkButton").onclick = () => {
           darkMode = !darkMode;
           document.body.classList.toggle("dark-mode", darkMode);
@@ -444,24 +469,28 @@ map.on("style.load", () => {
             selectionLight.intensity = darkMode ? 40 : 25;
           }
         };
+
         document.getElementById("statusButton").onclick = () => {
           if(window.innerWidth <= 767 && document.getElementById("infoBox").classList.contains("visible")) document.getElementById("infoBox").classList.remove("visible");
           applyStatusColors(!statusMode);
           if(areaMode) applyAreaColors(false);
           if(amenitiesMode) applyAmenitiesColors(false);
         };
+
         document.getElementById("areaButton").onclick = () => {
           if(window.innerWidth <= 767 && document.getElementById("infoBox").classList.contains("visible")) document.getElementById("infoBox").classList.remove("visible");
           applyAreaColors(!areaMode);
           if(statusMode) applyStatusColors(false);
           if(amenitiesMode) applyAmenitiesColors(false);
         };
+
         document.getElementById("amenitiesButton").onclick = () => {
           if(window.innerWidth <= 767 && document.getElementById("infoBox").classList.contains("visible")) document.getElementById("infoBox").classList.remove("visible");
           applyAmenitiesColors(!amenitiesMode);
           if(statusMode) applyStatusColors(false);
           if(areaMode) applyAreaColors(false);
         };
+
         document.getElementById("treesButton").onclick = () => {
           treesMode = !treesMode;
           document.getElementById("treesButton").classList.toggle("active", treesMode);
@@ -470,12 +499,14 @@ map.on("style.load", () => {
             applyTreesStyle(treesMode);
           }
         };
+
         const infoBox = document.getElementById("infoBox");
         infoBox.addEventListener("click", e => {
           if(window.innerWidth <= 767 && e.target === infoBox){
             infoBox.classList.remove("visible");
           }
         });
+
         const amenityImg = document.getElementById("amenityImage");
         const fullscreenOverlay = document.getElementById("fullscreenOverlay");
         const fullscreenImage = document.getElementById("fullscreenImage");
@@ -486,6 +517,7 @@ map.on("style.load", () => {
         fullscreenOverlay.onclick = () => {
           fullscreenOverlay.classList.remove("visible");
         };
+
         document.getElementById("reserveBtn").onclick = () => {
           document.getElementById("reserveBtn").style.display = "none";
           document.getElementById("reserveForm").style.display = "block";
@@ -493,6 +525,7 @@ map.on("style.load", () => {
             infoBox.scrollIntoView({behavior: "smooth", block: "center"});
           }
         };
+
         document.getElementById("sendReserveBtn").onclick = () => {
           const name = document.getElementById("reserveName").value.trim();
           const email = document.getElementById("reserveEmail").value.trim();
@@ -503,6 +536,7 @@ map.on("style.load", () => {
           document.getElementById("reserveForm").style.display = "none";
           document.getElementById("thankYouMsg").style.display = "block";
         };
+
         map.on("click", e => {
           const hits = tb.queryRenderedFeatures(e.point);
           if(selectionLight){ tb.remove(selectionLight); selectionLight = null; }
@@ -580,6 +614,7 @@ map.on("style.load", () => {
     render: () => tb.update()
   });
 });
+
 let splashFaded = false;
 const splashLogo = document.getElementById("splashLogo");
 ["zoomstart","dragstart","rotatestart","pitchstart","touchstart","mousedown"].forEach(ev =>
@@ -591,6 +626,7 @@ const splashLogo = document.getElementById("splashLogo");
     }
   })
 );
+
 function showLegend() { document.getElementById("areaLegend").style.display = "block"; }
 function hideLegend() { document.getElementById("areaLegend").style.display = "none"; }
 </script>
