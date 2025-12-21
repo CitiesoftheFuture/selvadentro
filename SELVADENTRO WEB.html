@@ -7,7 +7,6 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.16.0/mapbox-gl.js"></script>
     <style>
-        /* (All CSS remains exactly the same as before - unchanged) */
         body{margin:0;padding:0;background:#000;overflow:hidden;font-family:Arial,sans-serif}
         #map{position:absolute;top:0;bottom:0;width:100%;height:100%}
         .topButton{
@@ -21,13 +20,16 @@
         }
         .topButton::before{content:"";position:absolute;inset:-10px;pointer-events:auto;}
         .topButton:hover{background:rgba(255,255,255,0.25)}
+        /* Active state: 85% opaque white so white icons remain visible */
         .topButton.active{
             background:rgba(255,255,255,0.85) !important;
             color:black !important;
         }
         .topButton img.icon{height:22px;opacity:0.9;}
+        /* LADO IZQUIERDO - Horizontal */
         #treesButton{left:20px;top:12px;}
         #darkButton{left:92px;top:12px;}
+        /* LADO DERECHO - Vertical */
         #statusButton{right:12px;top:12px;}
         #areaButton{right:12px;top:70px;}
         #amenitiesButton{right:12px;top:128px;}
@@ -43,6 +45,7 @@
             #areaButton{right:8px;top:62px;}
             #amenitiesButton{right:8px;top:116px;}
         }
+        /* LEYENDA ÁREA */
         #areaLegend{
             position:fixed;top:74px;left:50%;transform:translateX(-50%);z-index:2000;
             background:rgba(0,0,0,0.9);color:white;padding:8px 12px;border-radius:12px;
@@ -53,6 +56,7 @@
         #areaLegend .legend-row{display:flex;gap:12px;justify-content:center;align-items:center;}
         #areaLegend .item{display:flex;align-items:center;gap:6px;}
         #areaLegend span{display:inline-block;width:16px;height:16px;border-radius:3px;flex-shrink:0;}
+        /* PANEL INFO */
         #infoBox{
             position:absolute;background:rgb(67,81,63);color:white;padding:26px 22px;
             border-radius:32px;
@@ -71,7 +75,7 @@
                 width:100%;max-width:none;
                 border-radius:32px 32px 0 0;
                 padding-top:60px;padding-bottom:80px;
-                height:auto;max-height:30vh;
+                height:auto;max-height:30vh; /* 70/30 map-to-panel ratio on mobile */
             }
             #infoBox.visible{
                 transform:translateX(-50%) translateY(0);
@@ -85,7 +89,7 @@
         @media(max-width:767px){
             .infoBoxContent{
                 margin-top:-20px;
-                padding-bottom:120px;
+                padding-bottom:120px; /* espacio para scroll cómodo */
             }
         }
         .metadata-block{margin-bottom:18px;text-align:center}
@@ -152,6 +156,7 @@
                 transform:translate(-50%,-65%);
             }
         }
+        /* BOTONES DE ÁRBOLES Y DARK */
         #treesButton, #darkButton {
             padding:5.25px 11.25px !important;
             min-width:45px !important;
@@ -168,6 +173,7 @@
                 height:14px !important;
             }
         }
+        /* LOGOS SECTION - MOBILE SCROLL REVEAL */
         @media(max-width:767px){
             #logosSection {
                 opacity: 0;
@@ -191,12 +197,14 @@
     <link href="https://cdn.jsdelivr.net/gh/jscastro76/threebox@v.2.2.2/dist/threebox.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/gh/jscastro76/threebox@v.2.2.2/dist/threebox.min.js"></script>
     <div id="map"></div>
+    <!-- LADO IZQUIERDO -->
     <button id="treesButton" class="topButton active">
         <img src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/arbol.png" class="icon" alt="Árboles">
     </button>
     <button id="darkButton" class="topButton">
         <img src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/lunas.png" class="icon" alt="Dark">
     </button>
+    <!-- LADO DERECHO - Vertical -->
     <button id="statusButton" class="topButton">STATUS</button>
     <button id="areaButton" class="topButton">ÁREA</button>
     <button id="amenitiesButton" class="topButton">AMENITIES</button>
@@ -231,6 +239,7 @@
                 </div>
                 <div class="thankYou" id="thankYouMsg">¡Perfecto! Te contactaremos en menos de 24h</div>
             </div>
+            <!-- LOGOS SECTION -->
             <div id="logosSection">
                 <img class="infoLogoBig" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
                 <div class="smallLogoContainer">
@@ -587,6 +596,7 @@
             document.getElementById("reserveForm").style.display = "none";
             document.getElementById("thankYouMsg").style.display = "block";
         };
+        // ---------- LOGOS REVEAL ON MOBILE SCROLL ----------
         const infoBoxContent = document.querySelector('.infoBoxContent');
         const logosSection = document.getElementById('logosSection');
         function checkLogosVisibility() {
@@ -681,8 +691,8 @@
             const height = map.getContainer().clientHeight;
             let dx, dy;
             if (!isMobile) {
-                // Desktop: 70% horizontal, 50% vertical
-                const targetPixelX = 0.7 * width;
+                // Desktop/Web: 65% horizontal, 50% vertical
+                const targetPixelX = 0.65 * width;
                 const targetPixelY = 0.5 * height;
                 dx = targetPixelX - (width / 2);
                 dy = targetPixelY - (height / 2);
@@ -694,7 +704,7 @@
                 dy = targetPixelY - (height / 2);
             }
             const currentZoom = map.getZoom();
-            const targetZoom = Math.min(currentZoom + 2, 18.2);
+            const targetZoom = Math.min(currentZoom + 2, 18.5);
             map.flyTo({
                 center: e.lngLat,
                 offset: [dx, dy],
