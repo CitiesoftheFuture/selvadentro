@@ -197,7 +197,6 @@
     <link href="https://cdn.jsdelivr.net/gh/jscastro76/threebox@v.2.2.2/dist/threebox.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/gh/jscastro76/threebox@v.2.2.2/dist/threebox.min.js"></script>
     <div id="map"></div>
-
     <!-- LADO IZQUIERDO -->
     <button id="treesButton" class="topButton active">
         <img src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/arbol.png" class="icon" alt="Árboles">
@@ -205,12 +204,10 @@
     <button id="darkButton" class="topButton">
         <img src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/lunas.png" class="icon" alt="Dark">
     </button>
-
     <!-- LADO DERECHO - Vertical -->
     <button id="statusButton" class="topButton">STATUS</button>
     <button id="areaButton" class="topButton">ÁREA</button>
     <button id="amenitiesButton" class="topButton">AMENITIES</button>
-
     <div id="areaLegend">
         <div class="legend-row">
             <div class="item"><span style="background:#E65100"></span>400-599</div>
@@ -220,7 +217,6 @@
             <div class="item"><span style="background:#9C27B0"></span>≥1300</div>
         </div>
     </div>
-
     <div id="infoBox">
         <div class="infoBoxContent">
             <div id="metaLote" class="metadata-block"></div>
@@ -253,26 +249,21 @@
             </div>
         </div>
     </div>
-
     <div id="fullscreenOverlay">
         <img id="fullscreenImage" src="" alt="Fullscreen Amenity">
     </div>
-
     <img id="splashLogo" src="https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVADENTRO_LOGO.png">
-
     <script>
         const AREA_COLORS = {400: "#E65100",600: "#FFC107",800: "#66BB6A",1000: "#2196F3",1300: "#9C27B0"};
         const AMENITIES_COLOR = "#2196F3";
         const REPO_BASE = "https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/";
         mapboxgl.accessToken = "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyNGtyYmtvIn0.f8f_PAURro1hU-sh_xnAuA";
-
         function getInitialCamera(){
             const w = window.innerWidth;
             if(w > 1200) return {center:{lng:-87.421729,lat:20.296090},zoom:14.44,pitch:69,bearing:90};
             if(w > 768) return {center:{lng:-87.421729,lat:20.296090},zoom:14.5,pitch:69,bearing:90};
             return {center:{lng:-87.434816,lat:20.281730},zoom:14.14,pitch:69,bearing:180};
         }
-
         const map = new mapboxgl.Map({
             container: "map",
             style: "mapbox://styles/mapbox/satellite-v9",
@@ -283,9 +274,7 @@
             antialias: true,
             fadeDuration: 0
         });
-
         const tb = window.tb = new Threebox(map, map.getCanvas().getContext('webgl'), {defaultLights: false});
-
         let statusMode = false, areaMode = false, amenitiesMode = false, treesMode = true, darkMode = false;
         let originalMaterials = new WeakMap();
         let originalTreeMaterials = new WeakMap();
@@ -298,11 +287,9 @@
         let terrainModel = null;
         let triangulosGroup = null;
         let triangulosModel = null;
-
         map.on("style.load", () => {
             map.setPaintProperty('satellite','raster-opacity',0.68);
             map.setPaintProperty('satellite','raster-brightness-min',0.08);
-
             map.addLayer({
                 id: "custom-threebox-model",
                 type: "custom",
@@ -313,9 +300,7 @@
                     shadowPlane.position.y = 3.8;
                     shadowPlane.receiveShadow = true;
                     tb.world.add(shadowPlane);
-
                     tb.world.add(new THREE.HemisphereLight(0xffffff,0x88aa88,0.35));
-
                     const sun = new THREE.DirectionalLight(0xffffff,0.95);
                     sun.position.set(1800,3000,2200);
                     sun.castShadow = true;
@@ -323,10 +308,8 @@
                     sun.shadow.camera.left = sun.shadow.camera.bottom = -2800;
                     sun.shadow.camera.right = sun.shadow.camera.top = 2800;
                     tb.world.add(sun);
-
                     ambientLight = new THREE.AmbientLight(0xffffff, 0.01);
                     tb.world.add(ambientLight);
-
                     tb.loadObj({
                         obj:"https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/SELVA3D.glb",
                         type:"gltf",
@@ -351,7 +334,6 @@
                             }
                         });
                         tb.add(model);
-
                         tb.loadObj({
                             obj: "https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/ARBOLES_NUEVOS.glb",
                             type: "gltf",
@@ -381,7 +363,6 @@
                             treesGroup.visible = true;
                             applyTreesStyle(true);
                         });
-
                         tb.loadObj({
                             obj: "https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/triangulos.glb",
                             type: "gltf",
@@ -419,7 +400,6 @@
                 render: () => tb.update()
             });
         });
-
         function resetAllMaterials(){
             terrainModel.traverse(c=>{
                 if(c.isMesh&&originalMaterials.has(c)){
@@ -427,13 +407,11 @@
                 }
             });
         }
-
         function toggleAmenityTriangles(enable) {
             if (triangulosGroup) {
                 triangulosGroup.visible = enable;
             }
         }
-
         function applyAmenitiesColors(enable){
             amenitiesMode = enable;
             document.getElementById("amenitiesButton").classList.toggle("active", enable);
@@ -458,7 +436,6 @@
             toggleAmenityTriangles(true);
             map.triggerRepaint();
         }
-
         const originalUpdate = tb.update;
         tb.update = function() {
             originalUpdate.call(tb);
@@ -470,7 +447,6 @@
                 });
             }
         };
-
         function applyStatusColors(enable){
             statusMode = enable;
             document.getElementById("statusButton").classList.toggle("active", enable);
@@ -495,7 +471,6 @@
             });
             map.triggerRepaint();
         }
-
         function applyAreaColors(enable){
             areaMode = enable;
             document.getElementById("areaButton").classList.toggle("active", enable);
@@ -526,7 +501,6 @@
             if(enable) showLegend();
             map.triggerRepaint();
         }
-
         function applyTreesStyle(enable) {
             if (!treesGroup) return;
             treesGroup.traverse(c => {
@@ -545,7 +519,6 @@
             });
             map.triggerRepaint();
         }
-
         document.getElementById("darkButton").onclick = () => {
             darkMode = !darkMode;
             document.body.classList.toggle("dark-mode", darkMode);
@@ -564,28 +537,24 @@
             }
             map.triggerRepaint();
         };
-
         document.getElementById("statusButton").onclick = () => {
             if(window.innerWidth <= 767 && document.getElementById("infoBox").classList.contains("visible")) document.getElementById("infoBox").classList.remove("visible");
             applyStatusColors(!statusMode);
             if(areaMode) applyAreaColors(false);
             if(amenitiesMode) applyAmenitiesColors(false);
         };
-
         document.getElementById("areaButton").onclick = () => {
             if(window.innerWidth <= 767 && document.getElementById("infoBox").classList.contains("visible")) document.getElementById("infoBox").classList.remove("visible");
             applyAreaColors(!areaMode);
             if(statusMode) applyStatusColors(false);
             if(amenitiesMode) applyAmenitiesColors(false);
         };
-
         document.getElementById("amenitiesButton").onclick = () => {
             if(window.innerWidth <= 767 && document.getElementById("infoBox").classList.contains("visible")) document.getElementById("infoBox").classList.remove("visible");
             applyAmenitiesColors(!amenitiesMode);
             if(statusMode) applyStatusColors(false);
             if(areaMode) applyAreaColors(false);
         };
-
         document.getElementById("treesButton").onclick = () => {
             treesMode = !treesMode;
             document.getElementById("treesButton").classList.toggle("active", treesMode);
@@ -594,27 +563,22 @@
                 applyTreesStyle(treesMode);
             }
         };
-
         const infoBox = document.getElementById("infoBox");
         infoBox.addEventListener("click", e => {
             if(window.innerWidth <= 767 && e.target === infoBox){
                 infoBox.classList.remove("visible");
             }
         });
-
         const amenityImg = document.getElementById("amenityImage");
         const fullscreenOverlay = document.getElementById("fullscreenOverlay");
         const fullscreenImage = document.getElementById("fullscreenImage");
-
         amenityImg.onclick = () => {
             fullscreenImage.src = amenityImg.src;
             fullscreenOverlay.classList.add("visible");
         };
-
         fullscreenOverlay.onclick = () => {
             fullscreenOverlay.classList.remove("visible");
         };
-
         document.getElementById("reserveBtn").onclick = () => {
             document.getElementById("reserveBtn").style.display = "none";
             document.getElementById("reserveForm").style.display = "block";
@@ -622,7 +586,6 @@
                 infoBox.scrollIntoView({behavior: "smooth", block: "nearest"});
             }
         };
-
         document.getElementById("sendReserveBtn").onclick = () => {
             const name = document.getElementById("reserveName").value.trim();
             const email = document.getElementById("reserveEmail").value.trim();
@@ -633,11 +596,9 @@
             document.getElementById("reserveForm").style.display = "none";
             document.getElementById("thankYouMsg").style.display = "block";
         };
-
         // ---------- LOGOS REVEAL ON MOBILE SCROLL ----------
         const infoBoxContent = document.querySelector('.infoBoxContent');
         const logosSection = document.getElementById('logosSection');
-
         function checkLogosVisibility() {
             if (window.innerWidth > 767) return;
             const scrollTop = infoBoxContent.scrollTop;
@@ -650,12 +611,10 @@
                 logosSection.classList.remove('visible');
             }
         }
-
         infoBoxContent.addEventListener('scroll', checkLogosVisibility);
         window.addEventListener('resize', () => {
             setTimeout(checkLogosVisibility, 100);
         });
-
         map.on("click", e => {
             const hits = tb.queryRenderedFeatures(e.point);
             if(selectionLight){
@@ -672,37 +631,29 @@
             document.getElementById("thankYouMsg").style.display = "none";
             amenityImg.style.display = "none";
             fullscreenOverlay.classList.remove("visible");
-
             if(statusMode) applyStatusColors(false);
             if(areaMode) applyAreaColors(false);
             if(amenitiesMode) applyAmenitiesColors(false);
-
             if(!hits.length) return;
-
             const obj = hits[0].object;
+            const d = {...(obj.userData||{}), ...(obj.userData?.extras||{})};
+            if (!d.AMENITIES && !d.Index) return;
             selectedObject = obj;
             originalMaterial = obj.material.clone();
-
-            const d = {...(obj.userData||{}), ...(obj.userData?.extras||{})};
-
             let lightColor;
             let colorEstado;
-
             if(d.AMENITIES){
                 const rawName = d.AMENITIES.toString().trim();
                 const amenityName = rawName.toUpperCase();
                 const slug = rawName.toLowerCase().replace(/\s+/g, '_') + ".png";
                 const imgUrl = REPO_BASE + slug;
-
                 document.getElementById("metaLote").innerHTML = `<div class="value amenity-value">${amenityName}</div>`;
                 document.getElementById("metaArea").innerHTML = "";
                 document.getElementById("metaConst").innerHTML = "";
                 document.getElementById("metaPrecio").innerHTML = "";
                 document.getElementById("metaEstado").innerHTML = "";
-
                 amenityImg.src = imgUrl;
                 amenityImg.style.display = "block";
-
                 lightColor = new THREE.Color(AMENITIES_COLOR);
                 colorEstado = AMENITIES_COLOR;
             } else {
@@ -711,20 +662,16 @@
                 const isAvailable = raw.includes("disponible");
                 colorEstado = isAvailable ? "#00ff00" : (raw.includes("reserv")||raw.includes("apartado")) ? "#D4AF37" : "#ff0000";
                 const estadoTexto = isAvailable ? "DISPONIBLE" : (raw.includes("reserv")||raw.includes("apartado")) ? "RESERVADO" : "VENDIDO";
-
                 document.getElementById("metaLote").innerHTML = `<div class="label">LOTE</div><div class="value">${currentLot}</div>`;
                 document.getElementById("metaArea").innerHTML = `<div class="label">ÁREA</div><div class="value">${d["Area"]||"—"}</div>`;
                 document.getElementById("metaConst").innerHTML = `<div class="label">CONSTRUIBLE</div><div class="value">${d["Construible"]||"—"}</div>`;
                 document.getElementById("metaPrecio").innerHTML = `<div class="label">PRECIO</div><div class="value">$ ${d["Precio"]||"—"}</div>`;
                 document.getElementById("metaEstado").innerHTML = `<div class="value" style="color:${colorEstado};font-size:26px;">${estadoTexto}</div>`;
-
                 if(isAvailable) {
                     document.getElementById("reserveBtn").style.display = "block";
                 }
-
                 lightColor = new THREE.Color(colorEstado);
             }
-
             selectionLight = new THREE.PointLight(lightColor, darkMode ? 40 : 25, 80, 2);
             const pos = obj.getWorldPosition(new THREE.Vector3());
             pos.y += 20;
@@ -735,26 +682,44 @@
             selectionLight.shadow.camera.near = 0.5;
             selectionLight.shadow.camera.far = 500;
             tb.add(selectionLight);
-
             obj.material = obj.material.clone();
             obj.material.color = new THREE.Color(colorEstado);
             obj.material.emissive = new THREE.Color(0x000000);
             obj.material.emissiveIntensity = 0;
-
+            const isMobile = window.innerWidth <= 767;
+            const width = map.getContainer().clientWidth;
+            const height = map.getContainer().clientHeight;
+            let dx, dy;
+            if (!isMobile) {
+                const targetPixelX = 0.7 * width;
+                const targetPixelY = 0.5 * height;
+                dx = targetPixelX - (width / 2);
+                dy = targetPixelY - (height / 2);
+            } else {
+                const targetPixelX = 0.5 * width;
+                const targetPixelY = 0.7 * height;
+                dx = targetPixelX - (width / 2);
+                dy = targetPixelY - (height / 2);
+            }
+            const currentZoom = map.getZoom();
+            const targetZoom = Math.min(currentZoom + 2, 18);
+            map.flyTo({
+                center: e.lngLat,
+                offset: [dx, dy],
+                zoom: targetZoom,
+                duration: 1800,
+                essential: true
+            });
             document.getElementById("infoBox").classList.add("visible");
-
             setTimeout(() => {
                 if(window.innerWidth <= 767){
                     logosSection.classList.remove('visible');
                     checkLogosVisibility();
                 }
             }, 600);
-
             if(!areaMode) hideLegend();
-
             map.triggerRepaint();
         });
-
         let splashFaded = false;
         const splashLogo = document.getElementById("splashLogo");
         ["zoomstart","dragstart","rotatestart","pitchstart","touchstart","mousedown"].forEach(ev => map.once(ev, () => {
@@ -764,11 +729,9 @@
                 setTimeout(() => splashLogo.remove(), 3000);
             }
         }));
-
         function showLegend() {
             document.getElementById("areaLegend").style.display = "block";
         }
-
         function hideLegend() {
             document.getElementById("areaLegend").style.display = "none";
         }
