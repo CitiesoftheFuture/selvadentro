@@ -96,11 +96,19 @@
         .label{font-size:14px;opacity:.85;margin-bottom:4px}
         .value{font-size:22px;font-weight:bold}
         .amenity-value{font-size:32px;font-weight:bold;text-transform:uppercase;}
+        /* ---- IMAGE SIZE INCREASED ---- */
         .amenity-image{
-            width:100%;max-width:320px;margin:20px auto 0;display:block;border-radius:16px;
-            box-shadow:0 8px 25px rgba(0,0,0,0.5);cursor:zoom-in;transition:transform .3s;
+            width:100%;
+            max-width:420px;   /* increased from 320px */
+            margin:28px auto 0;
+            display:block;
+            border-radius:16px;
+            box-shadow:0 8px 25px rgba(0,0,0,0.5);
+            cursor:zoom-in;
+            transition:transform .3s;
         }
         .amenity-image:hover{transform:scale(1.05);}
+        /* ---- FULLSCREEN OVERLAY (bigger image when zoomed) ---- */
         #fullscreenOverlay{
             position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.95);
             display:flex;justify-content:center;align-items:center;z-index:9999;visibility:hidden;opacity:0;
@@ -108,7 +116,10 @@
         }
         #fullscreenOverlay.visible{visibility:visible;opacity:1;}
         #fullscreenImage{
-            max-width:95vw;max-height:95vh;object-fit:contain;border-radius:12px;
+            max-width:95vw;
+            max-height:95vh;
+            object-fit:contain;
+            border-radius:12px;
             box-shadow:0 20px 60px rgba(0,0,0,0.8);
         }
         .areaConstContainer{
@@ -257,6 +268,20 @@
         const AREA_COLORS = {400: "#E65100",600: "#FFC107",800: "#66BB6A",1000: "#2196F3",1300: "#9C27B0"};
         const AMENITIES_COLOR = "#2196F3";
         const REPO_BASE = "https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/";
+
+        // List of amenity names that use .jpg instead of .png
+        const JPG_AMENITIES = new Set([
+            "jungle gym",
+            "jungle bar",
+            "canchas",
+            "casa cenotes",
+            "cenote mirador",
+            "mirador",
+            "pabellon holistico",
+            "pets jungle",
+            "spa"
+        ]);
+
         mapboxgl.accessToken = "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyNGtyYmtvIn0.f8f_PAURro1hU-sh_xnAuA";
         function getInitialCamera(){
             const w = window.innerWidth;
@@ -645,7 +670,13 @@
             if(d.AMENITIES){
                 const rawName = d.AMENITIES.toString().trim();
                 const amenityName = rawName.toUpperCase();
-                const slug = rawName.toLowerCase().replace(/\s+/g, '_') + ".png";
+                const normalized = rawName.toLowerCase();
+                let slug;
+                let extension = "png";
+                if (JPG_AMENITIES.has(normalized)) {
+                    extension = "jpg";
+                }
+                slug = normalized.replace(/\s+/g, '_') + "." + extension;
                 const imgUrl = REPO_BASE + slug;
                 document.getElementById("metaLote").innerHTML = `<div class="value amenity-value">${amenityName}</div>`;
                 document.getElementById("metaArea").innerHTML = "";
@@ -691,13 +722,11 @@
             const height = map.getContainer().clientHeight;
             let dx, dy;
             if (!isMobile) {
-                // Desktop/Web: 65% horizontal, 50% vertical
                 const targetPixelX = 0.65 * width;
                 const targetPixelY = 0.5 * height;
                 dx = targetPixelX - (width / 2);
                 dy = targetPixelY - (height / 2);
             } else {
-                // Mobile: 50% horizontal, 35% vertical (higher on screen)
                 const targetPixelX = 0.5 * width;
                 const targetPixelY = 0.35 * height;
                 dx = targetPixelX - (width / 2);
