@@ -140,15 +140,16 @@ const AMENITIES_COLOR = "#2196F3";
 const REPO_BASE = "https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/";
 const JPG_AMENITIES = new Set(["jungle gym", "jungle bar", "canchas", "casa cenotes", "cenote mirador", "mirador", "pabellon holistico", "pets jungle", "spa"]);
 
-// Current exchange rate USD to MXN (as of December 26, 2025 ≈ 20.35 MXN per USD - you can update this value if needed)
+// Current exchange rate USD to MXN (as of December 26, 2025)
 const USD_TO_MXN = 20.35;
 
 mapboxgl.accessToken = "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyNGtyYmtvIn0.f8f_PAURro1hU-sh_xnAuA";
 
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRZWWE457cq-C1YYscmXZbH6oSLbseAiC_0Rd1bFHCTV5gLHwKO8MNKwPEKWrEWvN5VBW5Wg8Zu4cQB/pub?output=csv";
+// Cache-buster to force fresh CSV every load
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRZWWE457cq-C1YYscmXZbH6oSLbseAiC_0Rd1bFHCTV5gLHwKO8MNKwPEKWrEWvN5VBW5Wg8Zu4cQB/pub?output=csv&cache=" + Date.now();
 
 let externalData = {};
-let currentUsdPrice = 0; // Stores the numeric USD price for the selected lot
+let currentUsdPrice = 0;
 
 fetch(CSV_URL)
   .then(response => {
@@ -157,6 +158,7 @@ fetch(CSV_URL)
   })
   .then(text => {
     const rows = text.trim().split('\n');
+    console.log("CSV loaded – " + rows.length + " rows");
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       const cols = [];
@@ -166,19 +168,18 @@ fetch(CSV_URL)
         if (char === '"') {
           inQuotes = !inQuotes;
         } else if (char === ',' && !inQuotes) {
-          cols.push(current);
+          cols.push(current.trim());
           current = '';
         } else {
           current += char;
         }
       }
       if (cols.length >= 5) {
-        let index = cols[0].trim();
-        let precioRaw = cols[3].trim();
-        let precio = precioRaw;
-        let statusRaw = cols[4].trim();
-        let status = statusRaw;
+        let index = cols[0];
+        let precio = cols[3];
+        let status = cols[4];
         externalData[index] = {precio, status};
+        console.log(`Lot: ${index} | Price: ${precio} | Status: ${status}`);
       }
     }
   })
@@ -616,26 +617,22 @@ map.on("click", e => {
     const ext = externalData[currentLot] || {};
     const precioRaw = ext.precio !== undefined ? ext.precio : (d["Precio"] || "—");
 
-    // Clean price to extract numeric value (remove $ , commas, etc.)
     let cleanPrice = precioRaw.toString().replace(/[^0-9.]/g, '').trim();
-    let usdNumeric = parseFloat(cleanPrice) || 0;
+    let usdNumeric = parseFloat(cleanPrice);
+    if (isNaN(usdNumeric)) usdNumeric = 0;
     currentUsdPrice = usdNumeric;
 
-    // Format USD
-    const usdFormatted = usdNumeric.toLocaleString('en-US');
+    const usdFormatted = usdNumeric > 0 ? usdNumeric.toLocaleString('en-US') : '—';
 
-    // Calculate and format MXN
     const mxnNumeric = usdNumeric * USD_TO_MXN;
-    const mxnFormatted = mxnNumeric.toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    const mxnFormatted = usdNumeric > 0 ? mxnNumeric.toLocaleString('es-MX', {minimumFractionDigits: 0, maximumFractionDigits: 0}) : '—';
 
-    // Default display: USD
     document.getElementById("metaPrecio").innerHTML = `
       <div class="label">PRECIO</div>
       <div class="value">$ ${usdFormatted} <span style="font-size:18px;opacity:0.8;">USD</span></div>
     `;
     document.getElementById("metaPrecio").dataset.mode = "usd";
 
-    // Click to toggle USD / MXN
     document.getElementById("metaPrecio").onclick = function() {
       if (this.dataset.mode === "usd") {
         this.innerHTML = `
