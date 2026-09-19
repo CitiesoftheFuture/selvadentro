@@ -20,7 +20,9 @@
    BASE (original look preserved)
    ══════════════════════════════════════════════════════════════════════ */
 *{box-sizing:border-box}
-body{margin:0;padding:0;background:#000;font-family:Arial,sans-serif}
+:root{--font:"Montserrat",Arial,sans-serif}
+body{margin:0;padding:0;background:#000;font-family:var(--font)}
+button,input,textarea{font-family:var(--font)}
 body.interactive,body.locked{overflow:hidden}
 body.narrative{overflow-x:hidden}
 #map{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0}
@@ -321,6 +323,9 @@ table.rt img.th{width:84px;height:56px;object-fit:cover;border-radius:8px;displa
 const REPO = "https://raw.githubusercontent.com/CitiesoftheFuture/selvadentro/main/";
 const CONFIG = {
   PROJECT: "SelvaDentro",
+  /* Typography — the Google Font family used across the whole app (narrative, UI, report, charts).
+     ► Replace "Montserrat" with the exact family name used on estudioama.mx (Inspect → font-family). */
+  FONT: { family:"Montserrat", weights:"300;400;500;600;700", fallback:"Arial, sans-serif" },
   MAPBOX_TOKEN: "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyNGtyYmtvIn0.f8f_PAURro1hU-sh_xnAuA",
   MAP_STYLE: "mapbox://styles/mapbox/satellite-v9",
   REPORT_PASSWORD: "selvadentro2026",
@@ -360,11 +365,11 @@ const CONFIG = {
     triangles: { url:REPO + "triangulos.glb",      translate:{x:-0.057, y:-0.026, z:-0.025} }
   },
 
-  AREA_COLORS: {400:"#E65100", 600:"#FFC107", 800:"#66BB6A", 1000:"#2196F3", 1300:"#9C27B0"},
+  AREA_COLORS: {400:"#D9764A", 600:"#E3BE63", 800:"#7FB585", 1000:"#5F98D3", 1300:"#9C74AB"},   /* desaturated palette */
   AREA_CATS: [
-    { label:"400-599", min:400, max:599, color:"#E65100" }, { label:"600-799", min:600, max:799, color:"#FFC107" },
-    { label:"800-999", min:800, max:999, color:"#66BB6A" }, { label:"1000-1299", min:1000, max:1299, color:"#2196F3" },
-    { label:"≥1300", min:1300, max:Infinity, color:"#9C27B0" }
+    { label:"400-599", min:400, max:599, color:"#D9764A" }, { label:"600-799", min:600, max:799, color:"#E3BE63" },
+    { label:"800-999", min:800, max:999, color:"#7FB585" }, { label:"1000-1299", min:1000, max:1299, color:"#5F98D3" },
+    { label:"≥1300", min:1300, max:Infinity, color:"#9C74AB" }
   ],
   STATUS_COLORS: { disponible:"#00ff00", reservado:"#D4AF37", vendido:"#ff0000" },
   AMENITIES_COLOR: "#2196F3",
@@ -406,26 +411,45 @@ const I = CONFIG.IMG;
 CONFIG.MAIN_STORY = {
   accent:"#D4AF37", endLabel:"Entrar al modo interactivo",
   chapters:[
-    { k:"Capítulo 01 · Introducción", h:"Bienvenido a SelvaDentro", p:"Un masterplan concebido dentro de la selva de la Riviera Maya, donde la arquitectura se retira para que la naturaleza sea protagonista. Desliza para recorrer el proyecto.", media:{hero:I.mirador},
+    { k:"01 · Selvadentro", h:"Un santuario habitable", p:"En la selva de Quintana Roo, a minutos de la playa de Tulum, Selvadentro es un masterplan concebido como un santuario habitable: un lugar para quienes buscan una conexión auténtica con la naturaleza y un estilo de vida basado en el respeto, la convivencia y la armonía con el entorno.", media:{hero:I.mirador},
       cam:{zoom:12.8, pitch:0, bearing:0, duration:4800}, actions:{lotsHidden:true} },
-    { k:"Capítulo 02 · Ubicación y contexto", h:"Entre Tulum y la selva", p:"A minutos de la costa caribeña, el proyecto se integra en un entorno de vegetación nativa, cenotes y caminos de piedra caliza.", media:{collage:[I.cenote, I.casaCenotes, I.mirador]}, wide:true,
-      cam:{zoom:13.4, pitch:35, bearing:15, duration:4200}, actions:{lotsHidden:true} },
-    { k:"Capítulo 03 · Masterplan", h:"Una visión completa", p:"El plan maestro organiza lotes residenciales, áreas verdes y amenidades en una trama orgánica que respeta la topografía y la vegetación existente.", media:{hero:I.pabellon},
-      cam:{zoom:14.0, pitch:50, bearing:35, duration:4200}, actions:{lotsHidden:true} },
-    { k:"Capítulo 04 · Los lotes", h:"Lotes para habitar la selva", p:"Cada lote fue trazado para maximizar privacidad y contacto con la naturaleza, con superficies generosas y reglas de construcción que protegen el paisaje.", media:null,
-      cam:{zoom:14.8, pitch:60, bearing:55, duration:3800}, actions:{growLots:true} },
-    { k:"Capítulo 05 · Áreas verdes", h:"La selva como infraestructura", p:"Gran parte del territorio se conserva como selva viva. Los árboles existentes se preservan y se enriquecen con especies nativas.", media:{hero:I.pets},
-      cam:{zoom:15.0, pitch:66, bearing:75, duration:3800}, actions:{trees:true} },
-    { k:"Capítulo 06 · Amenidades", h:"Espacios para compartir", p:"Cenotes, miradores, spa, canchas y pabellones se distribuyen a lo largo del proyecto, siempre a distancia caminable de cada lote.", media:{collage:[I.spa, I.bar, I.canchas, I.gym]}, wide:true,
-      cam:{zoom:14.6, pitch:58, bearing:95, duration:3800}, actions:{mode:"amenities", triangles:true} },
-    { k:"Capítulo 07 · Superficies", h:"Distribución por tamaño", side:"left", p:"Los lotes se agrupan en cinco categorías de superficie. La gráfica muestra cuántos lotes existen en cada rango, calculado en vivo desde los datos del proyecto.", swatches:"area",
-      cam:{zoom:14.3, pitch:48, bearing:110, duration:3800}, actions:{mode:"area", chart:"area"} },
-    { k:"Capítulo 08 · Disponibilidad", h:"Estado del inventario", side:"left", p:"Comparativa entre los lotes disponibles y los que ya han sido reservados o vendidos, según la base de datos en tiempo real.",
-      cam:{zoom:14.4, pitch:52, bearing:125, duration:3800}, actions:{chart:"availability"} },
-    { k:"Capítulo 09 · Lotes disponibles", h:"Encuentra tu lugar", p:"El modelo se colorea según el estado de cada lote. El verde indica disponibilidad inmediata.", swatches:"status",
-      cam:{zoom:14.9, pitch:62, bearing:140, duration:3800}, actions:{mode:"status"} },
-    { k:"Capítulo 10 · Invitación", h:"Explora SelvaDentro", p:"A continuación podrás navegar libremente por el modelo, consultar cada lote, sus precios, reservar y descargar su ficha técnica. Con el botón del foco descubrirás las seis estrategias del proyecto.", media:{collage:[I.mirador, I.spa, I.cenote, I.pabellon]}, wide:true, center:true,
-      cam:{zoom:14.44, pitch:69, bearing:90, duration:4500}, actions:{orbit:true} }
+    { k:"02 · Ubicación", h:"Selva, mar y conectividad", p:"Ubicado en la selva maya, el proyecto está a pocos minutos de la costa y cuenta con acceso estratégico a través de la estación del Tren Maya y del nuevo aeropuerto de la región. Lejos del ruido, cerca de todo.", media:{collage:[I.cenote, I.mirador]},
+      stats:[{v:"15 min",l:"a la playa de Tulum"},{v:"Tren Maya",l:"estación cercana"}],
+      cam:{zoom:13.3, pitch:30, bearing:10, duration:4400}, actions:{lotsHidden:true} },
+    { k:"03 · Escala", h:"103 hectáreas de selva", p:"El conjunto se desarrolla sobre 103 hectáreas. En lugar de remodelar el terreno buscando eficiencia, el plan maestro deja que la selva dé forma a la traza: la arquitectura actúa como mediadora entre la continuidad natural y la presencia humana.", media:null,
+      stats:[{v:"103 ha",l:"superficie total"},{v:"> 50%",l:"selva conservada"}],
+      cam:{zoom:13.6, pitch:40, bearing:25, duration:4400}, actions:{lotsHidden:true} },
+    { k:"04 · Filosofía", h:"Refinamiento en la contención", p:"Selvadentro está pensado como una referencia de arquitectura que respeta, preserva y honra la belleza de la selva. En una época en que el lujo se confunde con el exceso, aquí el refinamiento está en la contención: materiales locales como el chukum y la madera, y volúmenes que se retiran ante los árboles.", media:{hero:I.pabellon},
+      cam:{zoom:14.0, pitch:50, bearing:40, duration:4400}, actions:{lotsHidden:true} },
+    { k:"05 · Los cenotes", h:"Anclas físicas y simbólicas", p:"Los cenotes son el corazón del plan: piscinas de agua cristalina enmarcadas por vegetación y roca que funcionan como anclas físicas y simbólicas del proyecto. Cada uno se protege con zonas de amortiguamiento donde no se construye ni se pavimenta.", media:{hero:I.cenote},
+      cam:{zoom:14.7, pitch:58, bearing:55, duration:4200}, actions:{lotsHidden:true, highlight:{amenities:["cenote mirador","casa cenotes"], nameRegex:"cenote", color:"#5F98D3", dim:true}} },
+    { k:"06 · La selva", h:"Un paisaje vivo", p:"Árboles de gran altura, plantas nativas y jardines vibrantes crean un paisaje dinámico, mientras áreas de arena fina evocan la sensación de una playa escondida dentro de la selva. La vegetación existente se preserva y se enriquece con especies de la región.", media:{hero:I.pets},
+      cam:{zoom:14.9, pitch:64, bearing:70, duration:4200}, actions:{lotsHidden:true, trees:true, treesColor:true} },
+    { k:"07 · Los lotes", h:"Lotes de selva", p:"Los lotes se acomodan entre los árboles existentes, no al revés. Superficies generosas y un reglamento que protege la vegetación garantizan privacidad y contacto permanente con la naturaleza. Observa cómo los volúmenes emergen del terreno, cluster por cluster.", media:null,
+      cam:{zoom:14.8, pitch:60, bearing:85, duration:4200}, actions:{growLots:true} },
+    { k:"08 · Casa de los Cenotes", h:"El epicentro social", p:"La Casa de los Cenotes es la casa club principal: su alberca se funde con un sistema acuático natural y su barra ofrece una experiencia que refleja la esencia de Tulum. Es el punto de encuentro de la comunidad.", media:{hero:I.casaCenotes},
+      cam:{zoom:15.3, pitch:66, bearing:100, duration:4200}, actions:{highlight:{amenities:["casa cenotes"], color:"#D4AF37", dim:true}} },
+    { k:"09 · Nidos · Mirador", h:"Del cenote al dosel", p:"Anidado dentro de un cenote, el mirador nace seis metros bajo el nivel del suelo y asciende en espiral hasta una plataforma con vista de 360° sobre la selva. Su estructura de madera y malla está pensada para que la vegetación la reclame poco a poco.", media:{hero:I.mirador},
+      cam:{zoom:15.4, pitch:68, bearing:118, duration:4200}, actions:{highlight:{amenities:["cenote mirador","mirador"], nameRegex:"nido|mirador", color:"#D4AF37", dim:true}} },
+    { k:"10 · Casa del Árbol y Jungle Bar", h:"Refugios entre las ramas", p:"La Casa del Árbol es el segundo espacio de reunión más grande del proyecto, con varios niveles de áreas recreativas, bar y descanso. El Jungle Bar es un refugio oculto en una hondonada natural: sus cubiertas parecen brotar del paisaje y la vegetación las atraviesa.", media:{collage:[I.bar, I.mirador]},
+      cam:{zoom:15.2, pitch:62, bearing:135, duration:4200}, actions:{highlight:{amenities:["jungle bar"], nameRegex:"arbol|tree|bar", color:"#D4AF37", dim:true}} },
+    { k:"11 · Wellness y Pabellón Holístico", h:"Bienestar en la cueva", p:"El santuario de bienestar se excava en una cueva antes de llegar a un cenote, ofreciendo experiencias de relajación en un entorno natural único. El Pabellón Holístico es un espacio introspectivo dedicado al yoga y la meditación, abierto al paisaje.", media:{collage:[I.spa, I.pabellon]},
+      cam:{zoom:15.3, pitch:65, bearing:152, duration:4200}, actions:{highlight:{amenities:["spa","pabellon holistico"], nameRegex:"wellness|spa|holistic", color:"#D4AF37", dim:true}} },
+    { k:"12 · Jugar en la selva", h:"Kids Jungle, Jungle Gym, canchas y mascotas", p:"Un parque infantil que se funde con el paisaje usando troncos y lianas, un gimnasio al aire libre, canchas deportivas entre los árboles y un parque para mascotas completan la vida cotidiana del santuario.", media:{collage:[I.gym, I.canchas, I.pets]}, wide:true,
+      cam:{zoom:15.0, pitch:60, bearing:170, duration:4200}, actions:{highlight:{amenities:["jungle gym","canchas","pets jungle"], nameRegex:"kids|gym|cancha|pets", color:"#D4AF37", dim:true}} },
+    { k:"13 · Las viviendas", h:"Habitar la selva", p:"Las casas están diseñadas para intensificar la experiencia de vivir en la selva: ventilación cruzada, luz natural y una conexión continua entre interior y exterior permiten que la arquitectura se disuelva en el entorno.", media:null,
+      stats:[{v:"100%",l:"ventilación cruzada"},{v:"Chukum",l:"y madera local"}],
+      cam:{zoom:14.9, pitch:62, bearing:188, duration:4200}, actions:{pulseLots:true} },
+    { k:"14 · Un proyecto integral", h:"Arquitectura, amenidades e identidad", p:"Estudio AMA desarrolló Selvadentro de manera integral: no solo las residencias y las amenidades, sino también su identidad gráfica. Cada elemento fue pensado para subrayar la riqueza natural del sitio y disolver los límites entre arquitectura y paisaje.", media:{collage:[I.casaCenotes, I.spa, I.bar, I.gym]}, wide:true,
+      cam:{zoom:14.5, pitch:55, bearing:205, duration:4200}, actions:{mode:"amenities", triangles:true} },
+    { k:"15 · Superficies", h:"Distribución por tamaño", p:"Los lotes se agrupan en cinco categorías de superficie. La gráfica muestra cuántos lotes existen en cada rango, calculado en vivo desde los datos del proyecto.", swatches:"area", side:"left",
+      cam:{zoom:14.3, pitch:48, bearing:220, duration:4200}, actions:{mode:"area", chart:"area"} },
+    { k:"16 · Disponibilidad", h:"Estado del inventario", p:"Comparativa entre los lotes disponibles y los que ya han sido reservados o vendidos, según la base de datos en tiempo real.", side:"left",
+      cam:{zoom:14.4, pitch:52, bearing:235, duration:4200}, actions:{chart:"availability"} },
+    { k:"17 · Lotes disponibles", h:"Encuentra tu lugar", p:"El modelo se colorea según el estado de cada lote. El verde indica disponibilidad inmediata.", swatches:"status",
+      cam:{zoom:14.9, pitch:62, bearing:250, duration:4200}, actions:{mode:"status"} },
+    { k:"18 · Invitación", h:"Explora Selvadentro", p:"A continuación podrás navegar libremente por el modelo, consultar cada lote, sus precios, reservar y descargar su ficha técnica. Con el botón del foco descubrirás las seis estrategias del proyecto.", media:{collage:[I.mirador, I.spa, I.cenote, I.pabellon]}, wide:true, center:true,
+      cam:{zoom:14.44, pitch:69, bearing:270, duration:5000}, actions:{orbit:true} }
   ]
 };
 
@@ -862,7 +886,7 @@ class Story {
 function areaStats(lots){ return CONFIG.AREA_CATS.map(c => ({...c, count:lots.filter(l => l.area >= c.min && l.area <= c.max).length})); }
 function statusStats(lots){ const s = {disponible:0, reservado:0, vendido:0}; lots.forEach(l => s[l.status]++); return s; }
 function showChart(kind){
-  const lots = getLots(); if (chart) chart.destroy(); Chart.defaults.font.family = "Arial"; Chart.defaults.color = "#eee";
+  const lots = getLots(); if (chart) chart.destroy(); Chart.defaults.font.family = CONFIG.FONT.family; Chart.defaults.color = "#eee";
   const ctx = $("chartCanvas").getContext("2d");
   if (kind === "area"){ const st = areaStats(lots); $("chartTitle").textContent = "Lotes por superficie (m²)"; $("chartSub").textContent = `${lots.length} lotes · datos en vivo`;
     chart = new Chart(ctx, { type:"bar", data:{ labels:st.map(s=>s.label), datasets:[{ data:st.map(s=>s.count), backgroundColor:st.map(s=>s.color), borderRadius:8 }] },
@@ -1055,7 +1079,7 @@ function renderReport(shots){
     <div class="rp-foot">${CONFIG.PROJECT} · Reporte confidencial generado automáticamente. Precios en MXN calculados al tipo de cambio configurado.</div>`;
   $("report").classList.add("show");
   $("reportClose").onclick = () => { $("report").classList.remove("show"); reportCharts.forEach(c => c.destroy()); reportCharts = []; };
-  Chart.defaults.font.family = "Arial"; Chart.defaults.color = "#4b524d";
+  Chart.defaults.font.family = CONFIG.FONT.family; Chart.defaults.color = "#4b524d";
   reportCharts.push(new Chart($("rcArea"), { type:"bar", data:{ labels:ar.map(c=>c.label), datasets:[{ data:ar.map(c=>c.count), backgroundColor:ar.map(c=>c.color), borderRadius:8 }] }, options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true, ticks:{precision:0}}, x:{grid:{display:false}} } } }));
   reportCharts.push(new Chart($("rcStatus"), { type:"doughnut", data:{ labels:["Disponible","Reservado","Vendido"], datasets:[{ data:[st.disponible, st.reservado, st.vendido], backgroundColor:[CONFIG.STATUS_COLORS.disponible, CONFIG.STATUS_COLORS.reservado, CONFIG.STATUS_COLORS.vendido], borderWidth:0 }] }, options:{ responsive:true, maintainAspectRatio:false, animation:false, cutout:"60%", plugins:{legend:{position:"bottom"}} } }));
 }
@@ -1064,6 +1088,10 @@ function renderReport(shots){
    BOOT
    ══════════════════════════════════════════════════════════════════════ */
 (function boot(){
+  /* load + apply the configured font */
+  const fl = document.createElement("link"); fl.rel = "stylesheet";
+  fl.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(CONFIG.FONT.family).replace(/%20/g,"+")}:wght@${CONFIG.FONT.weights}&display=swap`;
+  document.head.appendChild(fl); document.documentElement.style.setProperty("--font", `"${CONFIG.FONT.family}", ${CONFIG.FONT.fallback}`);
   $("splashImg").src = CONFIG.LOGO; $("infoLogoBig").src = CONFIG.LOGO; $("treesIcon").src = CONFIG.ICON_TREES; $("darkIcon").src = CONFIG.ICON_DARK;
   $("smallLogos").innerHTML = CONFIG.SMALL_LOGOS.map(l => `<a href="${l.href}" target="_blank" rel="noopener"><img class="smallLogo" src="${l.src}" alt="${l.alt}"></a>`).join("");
   mainStory = new Story({ mount:$("mainStory"), chapters:CONFIG.MAIN_STORY.chapters, accent:CONFIG.MAIN_STORY.accent,
