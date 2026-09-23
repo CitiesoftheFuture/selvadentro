@@ -187,6 +187,31 @@ body.interactive #progress{display:none}
 .s-head button{margin-left:auto;pointer-events:auto}
 
 /* ─── Chart panel ────────────────────────────────────────────────────── */
+/* POI markers (region chapters) */
+.poi{display:flex;align-items:center;gap:8px;pointer-events:none;font-family:var(--font);font-size:11px;letter-spacing:.06em;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.9);white-space:nowrap}
+.poi i{width:12px;height:12px;border-radius:50%;background:#D4AF37;box-shadow:0 0 0 4px rgba(212,175,55,.35),0 0 18px rgba(212,175,55,.9);flex-shrink:0}
+.poi.site i{background:#7ED957;box-shadow:0 0 0 5px rgba(126,217,87,.35),0 0 22px rgba(126,217,87,.95);width:14px;height:14px}
+.poi.site span{font-weight:700;font-family:var(--font-head);font-size:13px;letter-spacing:.14em;text-transform:uppercase}
+/* CTA inside a card */
+.card .cta{margin-top:18px;display:inline-block}
+/* House element panel */
+#housePanel{position:fixed;right:18px;top:80px;z-index:3000;width:300px;max-height:calc(100vh - 120px);overflow:auto;background:rgba(245,245,243,.97);color:#1f1f1f;border-radius:6px;
+  box-shadow:0 14px 50px rgba(0,0,0,.45);padding:18px 18px 16px;display:none;pointer-events:auto;border:1px solid rgba(0,0,0,.06)}
+#housePanel.show{display:block}
+#housePanel h4{margin:0 0 4px;font-family:var(--font-head);font-size:14px;letter-spacing:.14em;text-transform:uppercase}
+#housePanel small{font-size:11px;color:#555}
+#housePanel .list{margin-top:12px;display:flex;flex-direction:column;gap:4px}
+#housePanel .row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-radius:4px;border:1px solid rgba(0,0,0,.08);background:#fff;cursor:pointer;font-size:12px;text-align:left;width:100%}
+#housePanel .row:hover{border-color:#D4AF37}
+#housePanel .row.on{background:#D4AF37;color:#fff;border-color:#D4AF37}
+#housePanel .row b{font-family:var(--font-head);font-size:11px;letter-spacing:.06em}
+#housePanel .row small{color:inherit;opacity:.7}
+#housePanel .tools{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+#housePanel .tools button{flex:1;padding:9px 10px;border-radius:30px;border:1.5px solid #1f1f1f;background:transparent;font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:var(--font-head);font-weight:700}
+#housePanel .tools button.gold{background:#D4AF37;border-color:#D4AF37;color:#fff}
+#housePanel .info{margin-top:10px;font-size:11px;line-height:1.6;color:#333;border-top:1px solid rgba(0,0,0,.08);padding-top:10px;display:none}
+#housePanel .info.show{display:block}
+@media(max-width:899px){ #housePanel{left:0;right:0;top:auto;bottom:0;width:100%;max-height:46vh;border-radius:6px 6px 0 0} }
 #chartPanel{position:fixed;z-index:20;background:rgba(0,0,0,0.86);color:#fff;backdrop-filter:blur(14px);border-radius:24px;box-shadow:0 10px 40px rgba(0,0,0,0.7);padding:22px 24px;opacity:0;pointer-events:none;transition:opacity .6s,transform .6s;border:1px solid rgba(255,255,255,.25)}
 #chartPanel h3{margin:0 0 4px;font-size:20px}
 #chartPanel small{opacity:.75;font-size:12px}
@@ -309,6 +334,8 @@ table.rt img.th{width:84px;height:56px;object-fit:cover;border-radius:8px;displa
 <!-- Story mounts: main intro story + one shared mount for strategies -->
 <section id="mainStory" class="story"></section>
 <section id="strategyStory" class="story"></section>
+<section id="houseStory" class="story"></section>
+<div id="housePanel"></div>
 
 <div class="modal" id="pwModal"><div class="box">
   <h3>REPORTE GENERAL</h3><small style="opacity:.8">Acceso restringido. Introduce la contraseña.</small>
@@ -319,6 +346,9 @@ table.rt img.th{width:84px;height:56px;object-fit:cover;border-radius:8px;displa
 <div id="report"><div class="rp" id="reportBody"></div></div>
 
 <script>
+/* The whole application runs inside startApp(); the bootstrap at the end makes sure the
+   libraries are present (with fallback CDNs) before calling it. */
+function startApp(){
 /* ══════════════════════════════════════════════════════════════════════
    ██  CONFIGURATION — everything editable lives here  ██
    To reuse this file for another project: change PROJECT, the model URLs,
@@ -396,8 +426,38 @@ const CONFIG = {
   REPORT_SNAPSHOT: { bearing:-90, marginRatio:1/8 },
   /* Narrative camera feel: durationScale stretches every chapter duration, curve<1.2 keeps
      fly-overs low and calm, GROW_LOTS times the "volumes rise from the ground" effect (ms) */
-  CAMERA: { durationScale:1.25, curve:1.1 },
-  GROW_LOTS: { total:7000, groupShare:0.45 },
+  CAMERA: {
+    durationScale:1.25, curve:1.1,
+    /* uniform:true → every chapter uses the exploring-mode camera (getInitialCamera: centre, zoom, pitch, bearing).
+       To give one chapter its own view later, add  custom:true  inside that chapter's cam:{…}. */
+    uniform:true
+  },
+  GROW_LOTS: { total:8000, groupShare:0.45 },
+  JUNGLE_KEPT_HA: 65,                         /* total jungle preserved at the end of the project */
+
+  /* Mesh selectors used by the narrative (regex tested against mesh names, amenity names and userData).
+     ► Adjust these to the names inside SELVA3D.glb once known. */
+  MESH: {
+    entrance: { nameRegex:"acceso|entrada|caseta|gate|entrance" },
+    cenotes:  { nameRegex:"cenote", excludeAmenities:true },
+    mainRoad: { nameRegex:"principal|main|spine|vialidad|anillo|loop|road_0|calle_principal" },
+    streets:  { nameRegex:"^calle|^street|^via|^c_[a-q]|calle_[a-q]|street_[a-q]", excludeRegex:"principal|main" }
+  },
+
+  /* Points of interest for the regional chapters (approximate coordinates — adjust freely) */
+  POIS: [
+    { name:"Tulum International Airport", lnglat:[-87.567, 20.037], kind:"air" },
+    { name:"Tren Maya · Aeropuerto Tulum",  lnglat:[-87.560, 20.045], kind:"train" },
+    { name:"Tren Maya · Tulum station",     lnglat:[-87.508, 20.222], kind:"train" },
+    { name:"Tulum",                          lnglat:[-87.465, 20.211], kind:"town" },
+    { name:"Carretera Federal 307",          lnglat:[-87.480, 20.262], kind:"road" }
+  ],
+  REGION_CAMERA: { center:[-87.50, 20.15], zoom:10.6, pitch:45 },   /* airport + site in one view */
+  PENINSULA_CAMERA: { center:[-89.0, 20.4], zoom:6.3, pitch:35 },
+
+  /* The house designed by AMA — model to be added to the repo as HOUSE_V1.glb */
+  HOUSE: { url:REPO + "HOUSE_V1.glb", lot:"A1", name:"Casa AMA · V1", offset:{x:0, y:0, z:0.6}, scale:1,
+           loadRotation:{x:90, y:-90, z:0}, setRotation:{x:0, y:0, z:270} },
   SPLASH: { fadeIn:2000, hold:1300, fadeOut:1600 },
 
   IMG: { mirador:REPO+"mirador.jpg", cenote:REPO+"cenote_mirador.jpg", casaCenotes:REPO+"casa_cenotes.jpg", pabellon:REPO+"pabellon_holistico.jpg",
@@ -409,62 +469,97 @@ const I = CONFIG.IMG;
    CHAPTER FORMAT (used by every story)
    { k:kicker, h:title, p:text, media:{hero:url}|{collage:[urls]}|null,
      wide:bool, center:bool, swatches:"area"|"status", stats:[{v,l}],
-     cam:{zoom,pitch,bearing,duration},
+     cam:{zoom,pitch,bearing,duration, custom:true → ignore CAMERA.uniform for this chapter},
      side:"left"|"right" (card position; default alternates), quote:bool (big centred statement), ink:"#hex" (paragraph colour),
-     actions:{ mode:"status"|"area"|"amenities"|"cluster", pulseLots, growLots, lotsHidden, trees:bool,
+     cam.centerOn:"lot:A1"|"amenity:spa"|"mesh:regex" (camera target from the model),
+     cta:{label, run:"house"} (button inside the card),
+     actions:{ mode:"status"|"area"|"amenities"|"cluster", pulseLots, growLots:true|{lots:[..]}, lotsHidden, lotsOnly:[..],
+               hide:[MESH keys], reveal:{sel,total,color}, glow:{sel,color,total}, pois, links, house, housePanel, trees:bool,
                treesColor:bool, triangles:bool, chart:"area"|"availability", orbit:bool,
                highlight:{ amenities:[names], nameRegex:"regex", series:[..], lots:[..], color, dim:bool } } }
    ────────────────────────────────────────────────────────────────────── */
 CONFIG.MAIN_STORY = {
   accent:"#D4AF37", endLabel:"Enter interactive mode",
   chapters:[
-    { k:"Selvadentro", h:"The Project", p:"Selvadentro is a development located within the jungle of Quintana Roo, just minutes from the beaches of Tulum, with strategic access to the Tren Maya stations and the region’s new airport.", media:{hero:I.mirador},
-      cam:{zoom:12.8, pitch:0, bearing:0, duration:4800}, actions:{lotsHidden:true} },
-    { k:"Selvadentro · The Project", p:"Conceived as a 103 hectare habitable sanctuary, the project avoids positioning architecture as an object placed within the jungle; instead, the house is understood as something that must recede, adapt, and ultimately belong. From the outset, the question is not how to occupy the site, but how to become part of it.",
+    /* 01 · Yucatán Peninsula */
+    { k:"Selvadentro", h:"The Project", p:"Selvadentro is a development located within the jungle of Quintana Roo, in the heart of the Yucatán Peninsula, just minutes from the beaches of Tulum.", media:{hero:I.mirador},
+      cam:{ custom:true, center:CONFIG.PENINSULA_CAMERA.center, zoom:CONFIG.PENINSULA_CAMERA.zoom, pitch:CONFIG.PENINSULA_CAMERA.pitch, duration:5000 },
+      actions:{ lotsHidden:true, hide:["streets","mainRoad"] } },
+    /* 02 · Tulum region: airport + site */
+    { k:"Location", h:"Tulum, the airport and the site", p:"…with strategic access to the Tren Maya stations and the region’s new airport. From the air, the site sits between the coast, the highway and the new international airport.",
+      cam:{ custom:true, center:CONFIG.REGION_CAMERA.center, zoom:CONFIG.REGION_CAMERA.zoom, pitch:CONFIG.REGION_CAMERA.pitch, duration:5000 },
+      actions:{ lotsHidden:true, hide:["streets","mainRoad"], pois:true } },
+    /* 03 · Regional mobility */
+    { k:"Mobility · Getting there", h:"Avenues, train and plane", p:"Federal Highway 307 links the site with Tulum, Playa del Carmen and Cancún; the Tren Maya stations connect the region by rail; and Tulum International Airport is only minutes away. Selvadentro sits between them: close to everything, far from the noise.",
+      stats:[{v:"307",l:"federal highway"},{v:"Tren Maya",l:"two stations nearby"},{v:"TQO",l:"Tulum airport"}],
+      cam:{ custom:true, center:CONFIG.REGION_CAMERA.center, zoom:CONFIG.REGION_CAMERA.zoom + 0.4, pitch:CONFIG.REGION_CAMERA.pitch + 8, duration:4600 },
+      actions:{ lotsHidden:true, hide:["streets","mainRoad"], pois:true, links:true } },
+    /* 04 · The site */
+    { k:"Selvadentro · The Project", h:"103 hectares", p:"Conceived as a 103 hectare habitable sanctuary, the project avoids positioning architecture as an object placed within the jungle; instead, the house is understood as something that must recede, adapt, and ultimately belong. From the outset, the question is not how to occupy the site, but how to become part of it.",
       stats:[{v:"103 ha",l:"habitable sanctuary"}],
-      cam:{zoom:13.3, pitch:30, bearing:10, duration:4400}, actions:{lotsHidden:true} },
-    { k:"Selvadentro · The Project", p:"Designed holistically, from residences and amenities to graphic identity, Selvadentro is a space where vegetation, light, and natural voids define the possibilities of intervention.", media:{hero:I.pets},
-      cam:{zoom:13.7, pitch:42, bearing:25, duration:4400}, actions:{lotsHidden:true, trees:true, treesColor:true} },
-    { k:"Selvadentro · The Project", p:"In this context, cenotes emerge as hidden jewels, whose conservation has been prioritized through specialist-led mapping and the implementation of restoration strategies.", media:{hero:I.cenote},
-      cam:{zoom:14.5, pitch:55, bearing:40, duration:4400}, actions:{lotsHidden:true, highlight:{amenities:["cenote mirador","casa cenotes"], nameRegex:"cenote", color:"#5F98D3", dim:true}} },
-    { quote:true, h:"“We did not come to impose, but to inhabit what already exists in a balanced and respectful way”", media:{collage:[I.cenote, I.mirador, I.pets]}, center:true,
-      cam:{zoom:14.0, pitch:48, bearing:55, duration:4400}, actions:{lotsHidden:true, trees:true, treesColor:true} },
-    { k:"Master plan", ink:"#33406b", p:"The master plan is organized into four phases, connected by a central spine that links residences and amenities.",
-      stats:[{v:"4",l:"phases"},{v:"1",l:"central spine"}],
-      cam:{zoom:14.6, pitch:58, bearing:70, duration:4400}, actions:{growLots:true} },
-    { k:"Master plan", ink:"#33406b", p:"To preserve the natural balance, only 30% of each plot can be built upon, with setbacks of 10 meters at the front and rear, and 7 meters on the sides.",
+      cam:{ duration:5200 }, actions:{ lotsHidden:true, hide:["streets","mainRoad"], trees:true, treesColor:true } },
+    /* 05 · One entrance */
+    { k:"Mobility · One entrance", h:"A single controlled access", p:"The whole development is served by one access point, controlled 24/7 with visitor registration and video surveillance. Vehicle traffic stays at the perimeter; inside, the jungle sets the pace.",
+      cam:{ duration:4400 }, actions:{ lotsHidden:true, hide:["streets","mainRoad"], highlight:{ sel:"entrance", color:"#D4AF37", dim:true } } },
+    /* 06 · Nine cenotes */
+    { k:"The cenotes", h:"Nine cenotes", p:"In this context, cenotes emerge as hidden jewels, whose conservation has been prioritized through specialist-led mapping and the implementation of restoration strategies. Nine cenotes were mapped inside the site; each one is protected by a buffer where nothing is built or paved.", media:{hero:I.cenote},
+      stats:[{v:"9",l:"cenotes"}],
+      cam:{ duration:4400 }, actions:{ lotsHidden:true, hide:["streets","mainRoad"], glow:{ sel:"cenotes", color:"#F2C048", total:4500 } } },
+    /* 07 · Main road */
+    { k:"Mobility · The spine", ink:"#33406b", h:"One main road around the cenotes", p:"The master plan is organized into four phases, connected by a central spine that links residences and amenities. A single low-speed main road wraps around the cenotes, keeping them untouched at the centre of the plan.",
+      cam:{ duration:4400 }, actions:{ lotsHidden:true, hide:["streets"], reveal:{ sel:"mainRoad", total:3000, color:"#D4AF37" }, glow:{ sel:"cenotes", color:"#F2C048", total:1200 } } },
+    /* 08 · Amenities */
+    { k:"Amenities", ink:"#8b4a2b", h:"The amenities designed by AMA", p:"Throughout the master plan, a series of amenities enhance the connection with nature. Casa de los Cenotes functions as the heart of the development; the Nido-Mirador offers immersive views into the jungle; Casa del Árbol serves as a gathering point; and spaces such as the Wellness area, Jungle Bar, and Holistic Pavilion integrate experiences of contemplation and introspection. The Kids Jungle, Jungle Gym, and Pets Jungle reinforce this relationship through outdoor recreational spaces.", media:{collage:[I.casaCenotes, I.spa, I.bar, I.gym]}, wide:true,
+      cam:{ duration:4400 }, actions:{ lotsHidden:true, hide:["streets"], mode:"amenities", triangles:true } },
+    /* 09 · Seventeen streets */
+    { k:"Mobility · The streets", ink:"#33406b", h:"Seventeen streets in the jungle", p:"Seventeen narrow, low-speed streets branch off the spine, one for each cluster, named from A to Q. Permeable surfaces and gentle curves keep the canopy continuous overhead.",
+      stats:[{v:"17",l:"streets · A to Q"}],
+      cam:{ duration:4400 }, actions:{ lotsHidden:true, reveal:{ sel:"streets", total:6000, order:"alpha", color:"#D4AF37" } } },
+    /* 10 · Plot A1 */
+    { k:"Master plan · Plot A1", ink:"#33406b", h:"Plot A1", p:"To preserve the natural balance, only 30% of each plot can be built upon, with setbacks of 10 meters at the front and rear, and 7 meters on the sides.",
       stats:[{v:"30%",l:"buildable"},{v:"10 m",l:"front & rear setback"},{v:"7 m",l:"side setback"}],
-      cam:{zoom:15.2, pitch:64, bearing:85, duration:4200}, actions:{pulseLots:true} },
-    { k:"Master plan", ink:"#33406b", p:"The architecture is elevated 60 cm above the ground, allowing vegetation to flow freely beneath. The composition is conceived as a dispersed system, where volumes are separated rather than consolidated, enabling the flow of light, air, and landscape.", media:{collage:[I.spa, I.bar, I.pabellon]}, wide:true,
-      stats:[{v:"60 cm",l:"above the ground"}],
-      cam:{zoom:15.0, pitch:60, bearing:100, duration:4200}, actions:{} },
-    { k:"Amenities", ink:"#8b4a2b", p:"Throughout the master plan, a series of amenities enhance the connection with nature.",
-      cam:{zoom:14.5, pitch:55, bearing:115, duration:4200}, actions:{mode:"amenities", triangles:true} },
-    { k:"Amenities · Casa de los Cenotes", ink:"#8b4a2b", p:"Casa de los Cenotes functions as the heart of the development;", media:{hero:I.casaCenotes},
-      cam:{zoom:15.3, pitch:66, bearing:130, duration:4200}, actions:{highlight:{amenities:["casa cenotes"], color:"#D4AF37", dim:true}} },
-    { k:"Amenities · Nido-Mirador", ink:"#8b4a2b", p:"the Nido-Mirador offers immersive views into the jungle;", media:{hero:I.mirador},
-      cam:{zoom:15.4, pitch:68, bearing:145, duration:4200}, actions:{highlight:{amenities:["cenote mirador","mirador"], nameRegex:"nido|mirador", color:"#D4AF37", dim:true}} },
-    { k:"Amenities · Casa del Árbol", ink:"#8b4a2b", p:"Casa del Árbol serves as a gathering point;",
-      cam:{zoom:15.2, pitch:62, bearing:160, duration:4200}, actions:{highlight:{nameRegex:"arbol|tree", color:"#D4AF37", dim:true}} },
-    { k:"Amenities · Wellness, Jungle Bar, Holistic Pavilion", ink:"#8b4a2b", p:"and spaces such as the Wellness area, Jungle Bar, and Holistic Pavilion integrate experiences of contemplation and introspection.", media:{collage:[I.spa, I.bar, I.pabellon]}, wide:true,
-      cam:{zoom:15.3, pitch:65, bearing:175, duration:4200}, actions:{highlight:{amenities:["spa","jungle bar","pabellon holistico"], nameRegex:"wellness|spa|holistic", color:"#D4AF37", dim:true}} },
-    { k:"Amenities · Kids Jungle, Jungle Gym, Pets Jungle", ink:"#8b4a2b", p:"The Kids Jungle, Jungle Gym, and Pets Jungle reinforce this relationship through outdoor recreational spaces.", media:{collage:[I.gym, I.pets]},
-      cam:{zoom:15.0, pitch:60, bearing:190, duration:4200}, actions:{highlight:{amenities:["jungle gym","pets jungle","canchas"], nameRegex:"kids|gym|pets", color:"#D4AF37", dim:true}} },
-    { k:"Residences", ink:"#4a4a3a", p:"With 100 plots, the development proposes three residential typologies: Casa K’uuchil, a “C”-shaped house organized around a central courtyard; Casa Tuukul, defined by a central “crack” that cuts through the dwelling; and Casa K’aab’al, where a central courtyard serves as the core of the home.",
-      stats:[{v:"100",l:"plots"},{v:"3",l:"residential typologies"}],
-      cam:{zoom:14.9, pitch:62, bearing:205, duration:4200}, actions:{mode:"cluster"} },
-    { k:"Residences", ink:"#4a4a3a", p:"To minimize environmental impact, the project implements sustainable design strategies, respecting the existing topography and utilizing local materials with traditional construction techniques such as Chukum.", media:{hero:I.pabellon},
-      cam:{zoom:14.6, pitch:56, bearing:220, duration:4200}, actions:{trees:true, treesColor:true} },
+      cam:{ custom:true, centerOn:"lot:A1", zoom:17.6, duration:5200 }, actions:{ lotsHidden:true, highlight:{ lots:["A1"], color:"#D4AF37", dim:false } } },
+    /* 11 · The first volume */
+    { k:"Master plan · Plot A1", ink:"#33406b", h:"The first volume", p:"The architecture is elevated 60 cm above the ground, allowing vegetation to flow freely beneath. Seventy percent of every plot remains jungle; the remaining thirty percent is the footprint where the house may rise.",
+      stats:[{v:"70%",l:"jungle kept per plot"},{v:"30%",l:"constructible"},{v:"60 cm",l:"above the ground"}],
+      cam:{ custom:true, centerOn:"lot:A1", zoom:17.9, duration:4400 }, actions:{ growLots:{ lots:["A1"] } } },
+    /* 12 · The house designed by AMA */
+    { k:"Residences · Casa AMA", ink:"#4a4a3a", h:"The house designed by AMA", p:"With 100 plots, the development proposes three residential typologies: Casa K’uuchil, a “C”-shaped house organized around a central courtyard; Casa Tuukul, defined by a central “crack” that cuts through the dwelling; and Casa K’aab’al, where a central courtyard serves as the core of the home.",
+      cta:{ label:"Explore the house →", run:"house" },
+      cam:{ custom:true, centerOn:"lot:A1", zoom:18.2, duration:4400 }, actions:{ lotsOnly:["A1"], house:true } },
+    /* 13 · All plots grow */
+    { k:"Residences", ink:"#4a4a3a", h:"100 plots, 65 hectares of jungle", p:"To minimize environmental impact, the project implements sustainable design strategies, respecting the existing topography and utilizing local materials with traditional construction techniques such as Chukum. Across the whole development, 65 of the 103 hectares remain untouched jungle.",
+      stats:[{v:"100",l:"plots"},{v:"65 ha",l:"jungle preserved"},{v:"63%",l:"of the site"}],
+      cam:{ duration:5200 }, actions:{ growLots:true, house:true } },
+    /* 14 · Belonging */
     { k:"Residences", ink:"#4a4a3a", p:"In Selvadentro, inhabiting becomes an immersive experience: architecture does not impose itself, but adapts and belongs. Refuge is no longer understood as separation, but as belonging; not an escape from the jungle, but a way of becoming part of it.", media:{collage:[I.casaCenotes, I.spa, I.bar, I.gym]}, wide:true,
-      cam:{zoom:14.2, pitch:50, bearing:235, duration:4400}, actions:{trees:true, treesColor:true} },
+      cam:{ duration:4400 }, actions:{ trees:true, treesColor:true, house:true } },
+    /* 15–17 · Data */
     { k:"Data", h:"Plot size distribution", p:"Plots are grouped into five size categories. The chart shows how many plots fall into each range, computed live from the project data.", swatches:"area", side:"left",
-      cam:{zoom:14.3, pitch:48, bearing:250, duration:4200}, actions:{mode:"area", chart:"area"} },
+      cam:{ duration:4200 }, actions:{ mode:"area", chart:"area", house:true } },
     { k:"Data", h:"Availability", p:"Available plots compared with those already reserved or sold, according to the live database.", side:"left",
-      cam:{zoom:14.4, pitch:52, bearing:262, duration:4200}, actions:{chart:"availability"} },
+      cam:{ duration:4200 }, actions:{ chart:"availability", house:true } },
     { k:"Data", h:"Available plots", p:"The model is coloured by the status of each plot. Green means immediately available.", swatches:"status",
-      cam:{zoom:14.9, pitch:62, bearing:275, duration:4200}, actions:{mode:"status"} },
+      cam:{ duration:4200 }, actions:{ mode:"status", house:true } },
+    /* 18 · Invitation */
     { k:"Selvadentro", h:"Explore Selvadentro", p:"Navigate the model freely, check every plot, its price, reserve and download its datasheet. The lightbulb button reveals the six strategies of the project.", media:{collage:[I.mirador, I.spa, I.cenote, I.pabellon]}, wide:true, center:true,
-      cam:{zoom:14.44, pitch:69, bearing:290, duration:5000}, actions:{orbit:true} }
+      cam:{ duration:5000 }, actions:{ house:true } }
+  ]
+};
+
+/* ── The house story (opened from chapter 12) ── */
+CONFIG.HOUSE_STORY = {
+  accent:"#D4AF37", title:"Casa AMA · V1",
+  chapters:[
+    { k:"Casa AMA · 01", h:"A house that recedes", p:"The house is understood as something that must recede, adapt, and ultimately belong. Casa K’uuchil is a “C”-shaped house organized around a central courtyard, where the jungle enters the heart of the home.",
+      cam:{ custom:true, centerOn:"lot:A1", zoom:18.4, duration:4400 }, actions:{ lotsOnly:["A1"], house:true } },
+    { k:"Casa AMA · 02", h:"60 cm above the ground", p:"The architecture is elevated 60 cm above the ground, allowing vegetation to flow freely beneath. Volumes are separated rather than consolidated, enabling the flow of light, air, and landscape.",
+      stats:[{v:"60 cm",l:"elevation"},{v:"30%",l:"footprint"}],
+      cam:{ custom:true, centerOn:"lot:A1", zoom:18.8, duration:4400 }, actions:{ lotsOnly:["A1"], house:true } },
+    { k:"Casa AMA · 03", h:"Local materials", p:"Sustainable design strategies respect the existing topography and use local materials with traditional construction techniques such as Chukum. Cross ventilation and natural light reduce the need for cooling.",
+      cam:{ custom:true, centerOn:"lot:A1", zoom:18.6, duration:4400 }, actions:{ lotsOnly:["A1"], house:true } },
+    { k:"Casa AMA · 04", h:"Explore the elements", p:"Select a group of elements on the panel, then a single element, to isolate it in the model and read its data. The report button generates a printable summary of the house.", side:"left",
+      cam:{ custom:true, centerOn:"lot:A1", zoom:19.0, duration:4400 }, actions:{ lotsOnly:["A1"], house:true, housePanel:true } }
   ]
 };
 
@@ -579,7 +674,9 @@ let selectedObject = null, originalMaterial = null, currentLot = "", selectionLi
 let treesGroup = null, treesModel = null, terrainModel = null, triangulosGroup = null, triangulosModel = null;
 let modelCenter = CONFIG.MODEL_CENTER_FALLBACK.slice(), modelBounds = null;
 let modelOpacity = 1, treesOpacity = 0.35, orbiting = false, chart = null, reportCharts = [], modelsReady = false, splashDone = false;
-let clusterColorMap = {}, activeStory = null, mainStory = null, strategyStory = null;
+let clusterColorMap = {}, activeStory = null, mainStory = null, strategyStory = null, houseStory = null;
+let houseModel = null, houseLoading = null, houseMaterials = new WeakMap(), houseSelection = { group:null, mesh:null };
+const poiMarkers = []; let linksLayerReady = false; const revealAnims = []; const glowAnims = []; const lngLatCache = {};
 
 /* ══════════════════════════════════════════════════════════════════════
    DATA
@@ -619,13 +716,15 @@ function buildClusterColors(){ const s = [...new Set(getLots().map(l => l.series
    ══════════════════════════════════════════════════════════════════════ */
 function getInitialCamera(){ const w = window.innerWidth; return w > 1200 ? CONFIG.CAMERA_DESKTOP_XL : w > 768 ? CONFIG.CAMERA_DESKTOP : CONFIG.CAMERA_MOBILE; }
 mapboxgl.accessToken = CONFIG.MAPBOX_TOKEN;
-const map = new mapboxgl.Map({ container:"map", style:CONFIG.MAP_STYLE, center:CONFIG.MODEL_CENTER_FALLBACK, zoom:getInitialCamera().zoom - 1.8, pitch:0, bearing:0, antialias:true, fadeDuration:0, preserveDrawingBuffer:true });
+const startCam = getInitialCamera();
+const map = new mapboxgl.Map({ container:"map", style:CONFIG.MAP_STYLE, center:CONFIG.CAMERA.uniform ? startCam.center : CONFIG.MODEL_CENTER_FALLBACK, zoom:CONFIG.CAMERA.uniform ? startCam.zoom : startCam.zoom - 1.8, pitch:CONFIG.CAMERA.uniform ? startCam.pitch : 0, bearing:CONFIG.CAMERA.uniform ? startCam.bearing : 0, antialias:true, fadeDuration:0, preserveDrawingBuffer:true });
 HANDLERS.forEach(h => map[h] && map[h].disable());
 const tb = window.tb = new Threebox(map, map.getCanvas().getContext("webgl"), { defaultLights:false });
 
 map.on("style.load", () => {
   map.setPaintProperty("satellite","raster-opacity",CONFIG.RASTER_LIGHT.opacity);
   map.setPaintProperty("satellite","raster-brightness-min",CONFIG.RASTER_LIGHT.brightnessMin);
+  try { map.setFog({ range:[0.8, 8], color:"#dfe6ea", "horizon-blend":0.08, "high-color":"#b8cde0", "space-color":"#0b0f14", "star-intensity":0.15 }); } catch(e){}
   map.addLayer({ id:"custom-threebox-model", type:"custom", renderingMode:"3d",
     onAdd(){
       const shadowPlane = new THREE.Mesh(new THREE.PlaneGeometry(15000,15000), new THREE.ShadowMaterial({opacity:0.95}));
@@ -739,12 +838,8 @@ function applyMode(mode){
 /* Generic highlight used by strategy chapters: match amenities by name, meshes by regex, lots by series/index */
 function highlightMeshes(h){
   if (!terrainModel || !h) return;
-  const rx = h.nameRegex ? new RegExp(h.nameRegex, "i") : null, am = (h.amenities||[]).map(s => s.toLowerCase()), ser = h.series||[], lots = h.lots||[];
   terrainModel.traverse(c => { if (!c.isMesh) return; const d = meshData(c);
-    const hit = (am.length && d.AMENITIES && am.includes(String(d.AMENITIES).trim().toLowerCase()))
-      || (rx && (rx.test(c.name||"") || rx.test(String(d.AMENITIES||"")) || rx.test(String(d.Name||d.name||""))))
-      || (ser.length && d.Index && ser.includes(seriesOf(d.Index))) || (lots.length && d.Index && lots.includes(String(d.Index)));
-    if (hit) paint(c, h.color || "#fff"); else if (h.dim && (d.Index || d.AMENITIES)) paint(c, CONFIG.DIM_COLOR); });
+    if (matchMesh(c, h)) paint(c, h.color || "#fff"); else if (h.dim && (d.Index || d.AMENITIES)) paint(c, CONFIG.DIM_COLOR); });
   map.triggerRepaint();
 }
 function applyTreesStyle(enable){
@@ -802,30 +897,198 @@ function prepareLotGrow(){
   });
   lotGrow.prepared = true;
 }
-function growLots(){
+function growLots(opts){
   if (!terrainModel) return; prepareLotGrow(); if (!lotGrow.meshes.length) return;
   if (lotGrow.raf) cancelAnimationFrame(lotGrow.raf);
-  const G = CONFIG.GROW_LOTS, series = [...new Set(lotGrow.meshes.map(m => m.userData.__grow.series))].sort();
+  const only = opts && opts.lots ? opts.lots.map(x => x.toUpperCase()) : null;
+  if (only) lotGrow.meshes.forEach(m => { const g = m.userData.__grow; m.scale[g.axis] = g.base * 0.001; });   /* subset: everything else stays collapsed */
+  const pool = only ? lotGrow.meshes.filter(m => only.includes(String(meshData(m).Index).toUpperCase())) : lotGrow.meshes;
+  if (!pool.length) return;
+  const G = CONFIG.GROW_LOTS, series = [...new Set(pool.map(m => m.userData.__grow.series))].sort();
   const groupDur = G.total * G.groupShare, stagger = series.length > 1 ? (G.total - groupDur) / (series.length - 1) : 0;
-  const maxNum = {}; lotGrow.meshes.forEach(m => { const g = m.userData.__grow; maxNum[g.series] = Math.max(maxNum[g.series] || 1, g.num); });
-  lotGrow.meshes.forEach(m => { const g = m.userData.__grow; m.scale[g.axis] = g.base * 0.001;
+  const maxNum = {}; pool.forEach(m => { const g = m.userData.__grow; maxNum[g.series] = Math.max(maxNum[g.series] || 1, g.num); });
+  pool.forEach(m => { const g = m.userData.__grow; m.scale[g.axis] = g.base * 0.001;
     g.start = series.indexOf(g.series) * stagger + (g.num / maxNum[g.series]) * groupDur * 0.35; g.dur = groupDur * 0.65; });
   const t0 = performance.now(), easeOut = t => 1 - Math.pow(1 - t, 3);
   const step = now => { const t = now - t0; let done = true;
-    lotGrow.meshes.forEach(m => { const g = m.userData.__grow; const k = Math.min(1, Math.max(0, (t - g.start) / g.dur)); if (k < 1) done = false; m.scale[g.axis] = g.base * Math.max(0.001, easeOut(k)); });
+    pool.forEach(m => { const g = m.userData.__grow; const k = Math.min(1, Math.max(0, (t - g.start) / g.dur)); if (k < 1) done = false; m.scale[g.axis] = g.base * Math.max(0.001, easeOut(k)); });
     map.triggerRepaint(); lotGrow.raf = done ? null : requestAnimationFrame(step); };
   lotGrow.raf = requestAnimationFrame(step);
 }
 function collapseLots(){ prepareLotGrow(); if (lotGrow.raf){ cancelAnimationFrame(lotGrow.raf); lotGrow.raf = null; } lotGrow.meshes.forEach(m => { const g = m.userData.__grow; m.scale[g.axis] = g.base * 0.001; }); if (map) map.triggerRepaint(); }
+function lotsOnly(list){ prepareLotGrow(); if (lotGrow.raf){ cancelAnimationFrame(lotGrow.raf); lotGrow.raf = null; } const L = list.map(x => x.toUpperCase()); lotGrow.meshes.forEach(m => { const g = m.userData.__grow; m.scale[g.axis] = g.base * (L.includes(String(meshData(m).Index).toUpperCase()) ? 1 : 0.001); }); if (map) map.triggerRepaint(); }
 function finishGrowLots(){ if (lotGrow.raf){ cancelAnimationFrame(lotGrow.raf); lotGrow.raf = null; } lotGrow.meshes.forEach(m => { const g = m.userData.__grow; m.scale[g.axis] = g.base; }); if (map) map.triggerRepaint(); }
+
+/* ─── Mesh selectors ─── sel = key of CONFIG.MESH | {nameRegex, excludeRegex, amenities, lots, series, excludeAmenities} */
+function resolveSel(sel){ return typeof sel === "string" ? (CONFIG.MESH[sel] || { nameRegex:sel }) : (sel || {}); }
+function matchMesh(c, sel){
+  const d = meshData(c), name = String(c.name || "");
+  if (sel.excludeAmenities && d.AMENITIES) return false;
+  if (sel.excludeRegex && new RegExp(sel.excludeRegex, "i").test(name)) return false;
+  const am = (sel.amenities || []).map(x => x.toLowerCase());
+  if (am.length && d.AMENITIES && am.includes(String(d.AMENITIES).trim().toLowerCase())) return true;
+  if (sel.lots && d.Index && sel.lots.map(x => x.toUpperCase()).includes(String(d.Index).toUpperCase())) return true;
+  if (sel.series && d.Index && sel.series.includes(seriesOf(d.Index))) return true;
+  if (sel.nameRegex){ const rx = new RegExp(sel.nameRegex, "i"); if (rx.test(name) || rx.test(String(d.AMENITIES || "")) || rx.test(String(d.Name || d.name || ""))) return true; }
+  return false;
+}
+function meshesFor(sel){ const S = resolveSel(sel), out = []; if (terrainModel) terrainModel.traverse(c => { if (c.isMesh && matchMesh(c, S)) out.push(c); }); return out; }
+function lngLatOf(spec){                       /* "lot:A1" | "amenity:casa cenotes" | "mesh:regex" → [lng,lat] */
+  if (lngLatCache[spec]) return lngLatCache[spec];
+  const [type, val] = spec.split(":"); const sel = type === "lot" ? { lots:[val] } : type === "amenity" ? { amenities:[val] } : { nameRegex:val };
+  const ms = meshesFor(sel); if (!ms.length) return null;
+  tb.world.updateMatrixWorld(true); const box = new THREE.Box3(); ms.forEach(m => box.expandByObject(m));
+  const ll = tb.unprojectFromWorld(box.getCenter(new THREE.Vector3())); return lngLatCache[spec] = [ll[0], ll[1]];
+}
+
+/* ─── Show / hide / reveal / glow ─── */
+function cancelAnims(list){ list.forEach(id => cancelAnimationFrame(id)); list.length = 0; }
+function setVisibleSel(sel, vis){ meshesFor(sel).forEach(c => c.visible = vis); }
+function showAllSel(){ Object.keys(CONFIG.MESH).forEach(k => setVisibleSel(k, true)); }
+function revealSel(sel, opts = {}){
+  const ms = meshesFor(sel); if (!ms.length){ console.warn("reveal: no meshes for", sel); return; }
+  ms.sort((a,b) => String(a.name).localeCompare(String(b.name), undefined, {numeric:true}));
+  const total = opts.total || 3000, each = Math.min(total, Math.max(900, total * 0.45)), stagger = ms.length > 1 ? (total - each) / (ms.length - 1) : 0;
+  ms.forEach((c,i) => { c.visible = true; c.material = c.material.clone(); c.material.transparent = true; c.material.opacity = 0; if (opts.color) c.material.color = new THREE.Color(opts.color); c.userData.__rv = { start:i*stagger, dur:each }; });
+  const t0 = performance.now(), easeOut = t => 1 - Math.pow(1 - t, 3);
+  const step = now => { const t = now - t0; let done = true;
+    ms.forEach(c => { const r = c.userData.__rv; const k = Math.min(1, Math.max(0, (t - r.start) / r.dur)); if (k < 1) done = false; c.material.opacity = easeOut(k); if (k >= 1) c.material.transparent = false; });
+    map.triggerRepaint(); if (!done) revealAnims.push(requestAnimationFrame(step)); };
+  revealAnims.push(requestAnimationFrame(step));
+}
+function glowSel(sel, opts = {}){
+  const ms = meshesFor(sel); if (!ms.length){ console.warn("glow: no meshes for", sel); return; }
+  tb.world.updateMatrixWorld(true);
+  ms.sort((a,b) => new THREE.Box3().setFromObject(a).min.x - new THREE.Box3().setFromObject(b).min.x);   /* light up one after another */
+  const col = new THREE.Color(opts.color || "#F2C048"), total = opts.total || 4000, each = Math.max(700, total * 0.4), stagger = ms.length > 1 ? (total - each) / (ms.length - 1) : 0;
+  ms.forEach((c,i) => { c.material = c.material.clone(); if (!c.material.emissive) return; c.material.emissive = col.clone(); c.material.emissiveIntensity = 0; c.userData.__gl = { start:i*stagger, dur:each, base:c.material.color.clone() }; });
+  const t0 = performance.now(), easeOut = t => 1 - Math.pow(1 - t, 3);
+  const step = now => { const t = now - t0; let done = true;
+    ms.forEach(c => { const g = c.userData.__gl; if (!g) return; const k = Math.min(1, Math.max(0, (t - g.start) / g.dur)); if (k < 1) done = false;
+      c.material.emissiveIntensity = 1.6 * easeOut(k); c.material.color.copy(g.base).lerp(col, 0.6 * easeOut(k)); });
+    map.triggerRepaint(); if (!done) glowAnims.push(requestAnimationFrame(step)); };
+  glowAnims.push(requestAnimationFrame(step));
+}
+
+/* ─── POIs + links (regional chapters) ─── */
+function buildPois(){
+  if (poiMarkers.length) return;
+  CONFIG.POIS.forEach(p => { const el = document.createElement("div"); el.className = "poi " + (p.kind || ""); el.innerHTML = `<i></i><span>${p.name}</span>`; poiMarkers.push(new mapboxgl.Marker({ element:el, anchor:"left" }).setLngLat(p.lnglat)); });
+  const el = document.createElement("div"); el.className = "poi site"; el.innerHTML = `<i></i><span>${CONFIG.PROJECT}</span>`; poiMarkers.push(new mapboxgl.Marker({ element:el, anchor:"left" }).setLngLat(modelCenter));
+}
+function showPois(on){ buildPois(); poiMarkers.forEach(m => on ? m.addTo(map) : m.remove()); }
+function ensureLinksLayer(){
+  if (linksLayerReady || !map.isStyleLoaded()) return;
+  map.addSource("poi-links", { type:"geojson", data:{ type:"FeatureCollection", features:CONFIG.POIS.map(p => ({ type:"Feature", geometry:{ type:"LineString", coordinates:[p.lnglat, modelCenter] } })) } });
+  map.addLayer({ id:"poi-links", type:"line", source:"poi-links", paint:{ "line-color":"#D4AF37", "line-width":2, "line-opacity":0, "line-dasharray":[2,2] } });
+  linksLayerReady = true;
+}
+function showLinks(on){ ensureLinksLayer(); if (!linksLayerReady) return; if (on){ let o = 0; tween(1800, k => map.setPaintProperty("poi-links", "line-opacity", k * 0.9)); } else map.setPaintProperty("poi-links", "line-opacity", 0); }
+
+/* ─── The AMA house (HOUSE_V1.glb) ─── */
+function ensureHouse(){
+  if (houseModel) return Promise.resolve(houseModel);
+  if (houseLoading) return houseLoading;
+  const H = CONFIG.HOUSE, ll = lngLatOf("lot:" + H.lot) || modelCenter;
+  houseLoading = new Promise(resolve => {
+    try{
+      tb.loadObj({ obj:H.url, type:"gltf", scale:H.scale, units:"meters", rotation:H.loadRotation }, obj => {
+        if (!obj){ console.warn("HOUSE_V1.glb not available yet"); resolve(null); return; }
+        obj.setCoords([ll[0], ll[1], H.offset.z || 0]); obj.setRotation(H.setRotation); obj.translateX(H.offset.x || 0); obj.translateY(H.offset.y || 0);
+        obj.traverse(c => { if (c.isMesh && c.material){ c.castShadow = c.receiveShadow = true; c.material = c.material.clone(); houseMaterials.set(c, c.material.clone()); } });
+        houseModel = obj; tb.add(obj); map.triggerRepaint(); resolve(obj);
+      });
+    }catch(e){ console.warn("house load failed", e); resolve(null); }
+    setTimeout(() => resolve(houseModel), 12000);          /* 404 or slow network: give up gracefully */
+  });
+  setTimeout(() => { if (!houseModel){ console.warn("HOUSE_V1.glb did not load (add it to the GitHub repo)"); } }, 15000);
+  return houseLoading;
+}
+function showHouse(on){ if (on) ensureHouse().then(o => { if (o) o.visible = true; map.triggerRepaint(); }); else if (houseModel){ houseModel.visible = false; map.triggerRepaint(); } }
+function houseGroups(){
+  if (!houseModel) return [];
+  const root = houseModel.model || houseModel.children[0] || houseModel, groups = new Map();
+  houseModel.traverse(c => { if (!c.isMesh) return;
+    let g = (c.parent && c.parent !== root && c.parent !== houseModel && c.parent.name) ? c.parent.name : (String(c.name || "Element").split(/[_\-\s.]/)[0] || "Elements");
+    if (!groups.has(g)) groups.set(g, []); groups.get(g).push(c); });
+  return [...groups.entries()].map(([name, meshes]) => ({ name, meshes })).sort((a,b) => a.name.localeCompare(b.name));
+}
+function houseIsolate(meshes){
+  if (!houseModel) return;
+  houseModel.traverse(c => { if (!c.isMesh) return; const base = houseMaterials.get(c); if (!base) return; c.material = base.clone();
+    if (meshes && !meshes.includes(c)){ c.material.transparent = true; c.material.opacity = 0.12; } });
+  if (meshes && meshes.length === 1 && meshes[0].material.emissive){ meshes[0].material.emissive = new THREE.Color("#D4AF37"); meshes[0].material.emissiveIntensity = 0.5; }
+  map.triggerRepaint();
+}
+function renderHousePanel(){
+  const P = $("housePanel"), groups = houseGroups();
+  if (!houseModel){ P.innerHTML = `<h4>${CONFIG.HOUSE.name}</h4><small>HOUSE_V1.glb is not in the repository yet. Upload it to <code>${CONFIG.HOUSE.url.replace(/^https?:\/\//,"")}</code> and reload.</small>`; return; }
+  const g = houseSelection.group;
+  P.innerHTML = `<h4>${CONFIG.HOUSE.name}</h4><small>${groups.length} groups · ${groups.reduce((a,x) => a + x.meshes.length, 0)} elements</small>
+    <div class="list">${!g ? groups.map((x,i) => `<button class="row" data-g="${i}"><b>${x.name.toUpperCase()}</b><small>${x.meshes.length} el.</small></button>`).join("")
+      : `<button class="row on" data-back="1"><b>← ${g.name.toUpperCase()}</b><small>${g.meshes.length} el.</small></button>` + g.meshes.map((m,i) => `<button class="row ${houseSelection.mesh === m ? "on" : ""}" data-m="${i}"><b>${m.name || "element " + (i+1)}</b></button>`).join("")}</div>
+    <div class="info ${houseSelection.mesh ? "show" : ""}" id="houseInfo">${houseSelection.mesh ? houseInfoHTML(houseSelection.mesh) : ""}</div>
+    <div class="tools"><button data-all="1">Show all</button><button class="gold" data-report="1">House report</button></div>`;
+  P.querySelectorAll("[data-g]").forEach(b => b.onclick = () => { houseSelection = { group:groups[+b.dataset.g], mesh:null }; houseIsolate(houseSelection.group.meshes); renderHousePanel(); });
+  P.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { houseSelection.mesh = houseSelection.group.meshes[+b.dataset.m]; houseIsolate([houseSelection.mesh]); renderHousePanel(); });
+  P.querySelectorAll("[data-back]").forEach(b => b.onclick = () => { houseSelection = { group:null, mesh:null }; houseIsolate(null); renderHousePanel(); });
+  P.querySelectorAll("[data-all]").forEach(b => b.onclick = () => { houseSelection = { group:null, mesh:null }; houseIsolate(null); renderHousePanel(); });
+  P.querySelectorAll("[data-report]").forEach(b => b.onclick = openHouseReport);
+}
+function houseInfoHTML(m){ const d = meshData(m), keys = Object.keys(d).filter(k => !k.startsWith("__") && k !== "extras" && typeof d[k] !== "object");
+  return `<b>${m.name || "element"}</b><br>${keys.length ? keys.map(k => `${k}: ${d[k]}`).join("<br>") : "No metadata in this element."}`; }
+function showHousePanel(on){ const P = $("housePanel");
+  if (on){ P.innerHTML = `<h4>${CONFIG.HOUSE.name}</h4><small>Loading house model…</small>`; P.classList.add("show");
+    ensureHouse().then(() => { houseSelection = { group:null, mesh:null }; renderHousePanel(); }); }
+  else { P.classList.remove("show"); houseIsolate(null); } }
+async function openHouseReport(){
+  finishGrowLots(); $("busyModal").classList.add("show"); $("busyText").textContent = "Capturing the house…";
+  const saved = { center:map.getCenter(), zoom:map.getZoom(), pitch:map.getPitch(), bearing:map.getBearing() };
+  const ll = lngLatOf("lot:" + CONFIG.HOUSE.lot) || modelCenter, base = getInitialCamera(); houseIsolate(null);
+  const shot = async (zoom, pitch, bearing) => { map.jumpTo({ center:ll, zoom, pitch, bearing }); map.triggerRepaint(); await waitIdle(2500); await sleep(120); return map.getCanvas().toDataURL("image/jpeg", 0.88); };
+  const s1 = await shot(18.6, base.pitch, base.bearing), s2 = await shot(18.9, 0, -90), s3 = await shot(18.4, base.pitch, base.bearing + 90);
+  map.jumpTo(saved); $("busyModal").classList.remove("show");
+  const groups = houseGroups(), lots = getLots(), lot = lots.find(l => l.index === CONFIG.HOUSE.lot) || {};
+  const numeric = {}; houseModel && houseModel.traverse(c => { if (!c.isMesh) return; const d = meshData(c); Object.keys(d).forEach(k => { const v = parseFloat(d[k]); if (!isNaN(v) && typeof d[k] !== "object" && !k.startsWith("__")) numeric[k] = (numeric[k] || 0) + v; }); });
+  const now = new Date().toLocaleString("es-MX", { dateStyle:"long", timeStyle:"short" });
+  $("reportBody").innerHTML = `
+    <div class="rp-head"><div><img src="${CONFIG.LOGO}" alt=""><h1>${CONFIG.HOUSE.name}</h1><div class="meta">Generated ${now} · Plot ${CONFIG.HOUSE.lot} · ${CONFIG.PROJECT}</div></div>
+      <div class="rp-tools"><button class="print" onclick="window.print()">PRINT / PDF</button><button class="close" id="reportClose">CLOSE</button></div></div>
+    <h2 class="sec">Plot</h2>
+    <div class="kpis">
+      <div class="kpi"><label>Plot</label><b>${CONFIG.HOUSE.lot}</b><small>cluster ${lot.series || "—"}</small></div>
+      <div class="kpi"><label>Plot area</label><b>${lot.area ? fmtInt(lot.area) + " m²" : "—"}</b></div>
+      <div class="kpi"><label>Constructible</label><b>${lot.construible ? fmtInt(lot.construible) + " m²" : (lot.area ? fmtInt(lot.area*0.3) + " m²" : "—")}</b><small>30% of the plot</small></div>
+      <div class="kpi"><label>Jungle kept</label><b>${lot.area ? fmtInt(lot.area*0.7) + " m²" : "—"}</b><small>70% of the plot</small></div>
+      <div class="kpi"><label>Setbacks</label><b>10 m / 7 m</b><small>front & rear / sides</small></div>
+      <div class="kpi"><label>Elevation</label><b>60 cm</b><small>above the ground</small></div>
+    </div>
+    <h2 class="sec">Views</h2>
+    <div class="rp-grid"><div class="rp-card"><img class="shot" src="${s1}"><div class="shot-cap">Perspective</div></div><div class="rp-card"><img class="shot" src="${s2}"><div class="shot-cap">Plan view</div></div></div>
+    <div class="rp-card"><img class="shot" src="${s3}"><div class="shot-cap">Perspective · opposite side</div></div>
+    <h2 class="sec">Elements</h2>
+    ${houseModel ? `<div class="rp-card"><table class="rt"><tr><th>Group</th><th class="num">Elements</th><th>Names</th></tr>
+      ${groups.map(g => `<tr><td><b>${g.name.toUpperCase()}</b></td><td class="num">${g.meshes.length}</td><td style="color:#5a635c">${g.meshes.map(m => m.name).filter(Boolean).slice(0,12).join(", ")}${g.meshes.length > 12 ? "…" : ""}</td></tr>`).join("")}</table></div>
+      ${Object.keys(numeric).length ? `<div class="rp-card"><h3>Numeric metadata (sums)</h3><table class="rt">${Object.entries(numeric).map(([k,v]) => `<tr><td>${k}</td><td class="num">${fmtInt(v)}</td></tr>`).join("")}</table></div>` : ""}`
+      : `<div class="rp-card">HOUSE_V1.glb is not in the repository yet — upload it to enable the element inventory.</div>`}
+    <div class="rp-foot">${CONFIG.PROJECT} · ${CONFIG.HOUSE.name} · Printable report generated automatically.</div>`;
+  $("report").classList.add("show"); $("reportClose").onclick = () => $("report").classList.remove("show");
+}
 
 /* Declarative chapter actions */
 function applyActions(a = {}){
+  cancelAnims(revealAnims); cancelAnims(glowAnims);
   resetAllMaterials(); clearOtherModes(null); hideChart();
+  /* visibility of named mesh groups: hidden, revealed (animated) or simply shown */
+  Object.keys(CONFIG.MESH).forEach(k => { if ((a.hide || []).includes(k)) setVisibleSel(k, false); else if (!(a.reveal && a.reveal.sel === k)) setVisibleSel(k, true); });
   if (a.mode) applyMode(a.mode);
-  if (a.highlight) highlightMeshes(a.highlight);
+  if (a.highlight){ const h = a.highlight.sel ? { ...resolveSel(a.highlight.sel), ...a.highlight } : a.highlight; highlightMeshes(h); }
+  if (a.reveal) revealSel(a.reveal.sel, a.reveal);
+  if (a.glow) glowSel(a.glow.sel, a.glow);
   if (a.pulseLots) pulseLots();
-  if (a.lotsHidden) collapseLots(); else if (a.growLots) growLots(); else finishGrowLots();
+  if (a.lotsHidden) collapseLots(); else if (a.lotsOnly) lotsOnly(a.lotsOnly); else if (a.growLots) growLots(a.growLots === true ? undefined : a.growLots); else finishGrowLots();
+  showPois(!!a.pois); showLinks(!!a.links);
+  showHouse(!!a.house); showHousePanel(!!a.housePanel);
   if (a.trees !== undefined && treesGroup){ treesGroup.visible = a.trees; if (a.trees) fadeTrees(1, 2000); }
   if (a.treesColor !== undefined) applyTreesStyle(!a.treesColor);
   if (a.triangles){ toggleAmenityTriangles(true); popTriangles(); }
@@ -834,6 +1097,7 @@ function applyActions(a = {}){
 }
 function revertActions(a = {}){
   if (a.orbit) slowOrbit(false); if (a.chart) hideChart(); if (a.growLots) finishGrowLots();
+  cancelAnims(revealAnims); cancelAnims(glowAnims);
   if (a.triangles || a.mode === "amenities") toggleAmenityTriangles(false);
   if (a.treesColor) applyTreesStyle(true);
 }
@@ -855,17 +1119,20 @@ class Story {
     const head = this.title ? `<div class="s-head" style="--accent:${this.accent}"><span class="tile">${ICONS[this.icon]||""}</span><b>${this.title}</b><button class="btn-line" data-close>Volver al modelo</button></div>` : "";
     this.mount.style.setProperty("--accent", this.accent);
     this.mount.innerHTML = head + this.chapters.map((c,i) => `<div class="step ${c.center ? "center" : (c.side || "")}" data-step="${i}"><div class="card ${c.wide ? "wide" : ""} ${c.quote ? "quote" : ""}" ${c.ink ? `style="--ink:${c.ink}"` : ""}>
-      ${c.k ? `<div class="kicker">${this.icon ? ICONS[this.icon] : ""}${c.k}</div>` : ""}${media(c)}${c.h ? `<h2>${c.h}</h2>` : ""}${c.p ? `<p>${c.p}</p>` : ""}${stats(c)}${c.swatches ? `<div class="swatches">${sw(c.swatches)}</div>` : ""}</div></div>`).join("")
+      ${c.k ? `<div class="kicker">${this.icon ? ICONS[this.icon] : ""}${c.k}</div>` : ""}${media(c)}${c.h ? `<h2>${c.h}</h2>` : ""}${c.p ? `<p>${c.p}</p>` : ""}${stats(c)}${c.swatches ? `<div class="swatches">${sw(c.swatches)}</div>` : ""}${c.cta ? `<button class="btn-gold cta" data-run="${c.cta.run}">${c.cta.label}</button>` : ""}</div></div>`).join("")
       + `<div class="story-end">${this.endHTML}</div>`;
     this.mount.querySelectorAll("[data-close]").forEach(b => b.onclick = () => this.onEnd && this.onEnd("close"));
     this.mount.querySelectorAll("[data-next]").forEach(b => b.onclick = () => this.onEnd && this.onEnd(b.dataset.next));
+    this.mount.querySelectorAll("[data-run]").forEach(b => b.onclick = () => runStoryAction(b.dataset.run, this));
   }
-  start(){
+  start(at = 0){
     activeStory = this; this.build(); this.mount.classList.add("on");
     document.body.classList.add("narrative"); document.body.classList.remove("interactive");
     document.documentElement.style.setProperty("--accent", this.accent);
     HANDLERS.forEach(h => map[h] && map[h].disable());
-    window.scrollTo(0,0); this.initScroll(); this.go(0);
+    const steps = this.mount.querySelectorAll(".step");
+    window.scrollTo(0, at > 0 && steps[at] ? steps[at].offsetTop : 0);
+    this.initScroll(); this.go(at);
   }
   initScroll(){
     const sel = `#${this.mount.id} .step`;
@@ -883,7 +1150,10 @@ class Story {
     if (this.current >= 0 && this.current !== i) revertActions(this.chapters[this.current].actions);
     this.current = i; const ch = this.chapters[i];
     if (i > 0 && modelOpacity < 1) fadeModel(1, 1500);
-    map.stop(); map.flyTo({ center:modelCenter, ...ch.cam, duration:(ch.cam.duration||4000)*CONFIG.CAMERA.durationScale, essential:true, curve:CONFIG.CAMERA.curve, easing:CAM_EASE });
+    const base = getInitialCamera(), useOwn = !CONFIG.CAMERA.uniform || ch.cam.custom;
+    let cam = { center:base.center, zoom:base.zoom, pitch:base.pitch, bearing:base.bearing };
+    if (useOwn){ const { custom, centerOn, duration, ...own } = ch.cam; cam = { ...cam, ...own }; cam.center = own.center || (centerOn && lngLatOf(centerOn)) || modelCenter; }
+    map.stop(); map.flyTo({ ...cam, duration:(ch.cam.duration||4000)*CONFIG.CAMERA.durationScale, essential:true, curve:CONFIG.CAMERA.curve, easing:CAM_EASE });
     applyActions(ch.actions);
   }
   resume(){ this.go(Math.max(this.pending, this.current, 0)); }
@@ -892,6 +1162,19 @@ class Story {
     if (this.scroller) this.scroller.destroy(); if (this.io) this.io.disconnect();
     window.removeEventListener("resize", this.onResize || (()=>{})); window.removeEventListener("scroll", this.onScroll || (()=>{}));
     this.mount.classList.remove("on"); this.mount.innerHTML = ""; this.current = -1; if (activeStory === this) activeStory = null;
+    showPois(false); showLinks(false); showHousePanel(false);
+  }
+}
+/* Buttons inside cards (cta.run) */
+function runStoryAction(run, from){
+  if (run === "house"){
+    const back = from === mainStory ? mainStory.current : 0;
+    from.stop();
+    houseStory = new Story({ mount:$("houseStory"), chapters:CONFIG.HOUSE_STORY.chapters, accent:CONFIG.HOUSE_STORY.accent, title:CONFIG.HOUSE_STORY.title,
+      endHTML:`<button class="btn-gold" data-close>Back to the story</button><button class="btn-line" data-report-house>Printable house report</button>`,
+      onEnd: () => { houseStory.stop(); mainStory.start(back); } });
+    houseStory.start();
+    $("houseStory").querySelectorAll("[data-report-house]").forEach(b => b.onclick = openHouseReport);
   }
 }
 
@@ -920,7 +1203,7 @@ function enterInteractive(){
   if (activeStory) activeStory.stop(); hideChart();
   document.body.classList.remove("narrative"); document.body.classList.add("interactive"); window.scrollTo(0,0);
   HANDLERS.forEach(h => map[h] && map[h].enable());
-  setModelOpacity(1); setTreesOpacity(1); resetAllMaterials(); clearOtherModes(null); finishGrowLots();
+  setModelOpacity(1); setTreesOpacity(1); resetAllMaterials(); clearOtherModes(null); finishGrowLots(); showAllSel(); cancelAnims(revealAnims); cancelAnims(glowAnims); showPois(false); showLinks(false); showHousePanel(false); if (houseModel) houseModel.visible = true;
   if (triangulosGroup){ triangulosGroup.visible = false; triangulosGroup.traverse(c => { if (c.isMesh) c.scale.setScalar(1); }); }
   if (treesGroup){ treesGroup.visible = treesMode; applyTreesStyle(treesMode); }
   const cam = getInitialCamera(); map.flyTo({ center:cam.center, zoom:cam.zoom, pitch:cam.pitch, bearing:cam.bearing, duration:3500, essential:true });
@@ -1017,7 +1300,7 @@ function checkPw(){ if ($("pwInput").value === CONFIG.REPORT_PASSWORD){ $("pwMod
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function waitIdle(maxMs){ return Promise.race([ new Promise(r => map.once("idle", r)), sleep(maxMs) ]); }
 async function snapshot(mode){
-  applyMode(mode); if (mode !== "amenities") toggleAmenityTriangles(false);
+  showAllSel(); applyMode(mode); if (mode !== "amenities") toggleAmenityTriangles(false);
   const S = CONFIG.REPORT_SNAPSHOT;
   /* exact fit to the model, then zoom out so the margin equals marginRatio × model size per side */
   const cam = modelBounds ? map.cameraForBounds(modelBounds, { padding:0, bearing:S.bearing, pitch:0 }) : { center:modelCenter, zoom:14.6 };
@@ -1114,6 +1397,28 @@ function renderReport(shots){
     endHTML:`<button class="btn-gold" data-close>${CONFIG.MAIN_STORY.endLabel}</button>`, onEnd: () => enterInteractive() });
   mainStory.start();
   runSplash();
+})();
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   BOOTSTRAP — verify libraries, load fallbacks, then start
+   ══════════════════════════════════════════════════════════════════════ */
+(function(){
+  const deps = [
+    { test:() => typeof mapboxgl !== "undefined", css:"https://cdn.jsdelivr.net/npm/mapbox-gl@3.16.0/dist/mapbox-gl.css", src:"https://cdn.jsdelivr.net/npm/mapbox-gl@3.16.0/dist/mapbox-gl.js", name:"Mapbox GL JS" },
+    { test:() => typeof Threebox !== "undefined", css:"https://unpkg.com/threebox-plugin@2.2.7/dist/threebox.css", src:"https://unpkg.com/threebox-plugin@2.2.7/dist/threebox.min.js", name:"Threebox" },
+    { test:() => typeof scrollama !== "undefined", src:"https://cdn.jsdelivr.net/npm/scrollama@3/build/scrollama.min.js", name:"Scrollama", optional:true },
+    { test:() => typeof Chart !== "undefined", src:"https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js", name:"Chart.js" }
+  ];
+  const msg = t => { const l = document.getElementById("loader"); if (l){ l.classList.remove("hide"); l.textContent = t; } };
+  const load = d => new Promise(res => { if (d.test()) return res(true);
+    msg("CARGANDO " + d.name.toUpperCase() + " (CDN alterno)…");
+    if (d.css){ const c = document.createElement("link"); c.rel = "stylesheet"; c.href = d.css; document.head.appendChild(c); }
+    const sc = document.createElement("script"); sc.src = d.src; sc.onload = () => res(d.test()); sc.onerror = () => res(false); document.head.appendChild(sc); });
+  (async () => {
+    for (const d of deps){ const ok = await load(d); if (!ok && !d.optional){ msg("NO SE PUDO CARGAR " + d.name.toUpperCase() + " — revisa la conexión a internet o un bloqueador de contenido"); return; } }
+    try { startApp(); } catch(e){ console.error(e); msg("ERROR: " + e.message); }
+  })();
 })();
 </script>
 </body>
