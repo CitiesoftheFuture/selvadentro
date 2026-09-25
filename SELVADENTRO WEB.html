@@ -165,7 +165,7 @@ body.dark-mode #infoBox{background:rgba(40,55,38,0.95);}
 @media(min-width:768px){ #logosSection { opacity: 1 !important; } }
 
 /* ─── Intro logo ─────────────────────────────────────────────────────── */
-#splash{ position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;pointer-events:none;background:#000;transition:opacity 1.6s ease }
+#splash{ position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;pointer-events:none;background:#000;transition:opacity 1s ease }
 #splash img{ width:440px;max-width:80vw;opacity:0;transform:scale(.94);transition:opacity 2s ease,transform 2s ease }
 #splash.in img{opacity:1;transform:scale(1)}
 #splash.fade img{opacity:0;transform:scale(1.03)}
@@ -452,7 +452,7 @@ const CONFIG = {
 
   ORIGIN: [-87.43715249608606, 20.30514220104367],
   LOAD_ROTATION: {x:90, y:-90, z:0},
-  SET_ROTATION:  {x:0, y:0, z:270},
+  SET_ROTATION:  {x:0, y:0, z:0},
   MODELS: {
     main:      { url:REPO + "SELVA3D.glb",        translate:{x:-0.057, y:-0.026, z:-0.025} },
     trees:     { url:REPO + "ARBOLES_NUEVOS.glb",  translate:{x:-1.22,  y:1.301,  z:0} },
