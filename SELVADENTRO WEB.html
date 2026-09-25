@@ -59,6 +59,55 @@ body.interactive .topButton{display:flex}
   border:1px solid rgba(255,255,255,0.35);border-radius:30px;cursor:pointer;backdrop-filter:blur(10px);display:none;transition:all .3s;font-family:inherit }
 #reportButton:hover{background:rgba(255,255,255,0.25);color:#fff}
 body.interactive #reportButton{display:block}
+#versionsButton{ position:fixed;left:50%;transform:translateX(calc(-50% + 130px));bottom:14px;z-index:2147483000;padding:6px 14px;background:rgba(0,0,0,0.45);color:rgba(255,255,255,0.75);font-size:9.5px;font-weight:bold;letter-spacing:.14em;border:1px solid rgba(255,255,255,0.35);border-radius:30px;cursor:pointer;backdrop-filter:blur(10px);display:none;transition:all .3s;font-family:var(--font-head) }
+#versionsButton:hover{background:rgba(255,255,255,0.25);color:#fff}
+body.interactive #versionsButton{display:block}
+@media(max-width:767px){ #reportButton{transform:translateX(calc(-50% - 70px))} #versionsButton{transform:translateX(calc(-50% + 70px))} }
+#ghostPill{position:fixed;left:50%;transform:translateX(-50%);bottom:50px;z-index:2147483000;display:none;gap:8px;align-items:center;background:rgba(229,57,53,.85);color:#fff;padding:8px 14px;border-radius:30px;font-size:11px;letter-spacing:.1em;font-family:var(--font-head);font-weight:700}
+#ghostPill.show{display:flex}
+#ghostPill button{border:1px solid #fff;background:transparent;color:#fff;border-radius:20px;padding:4px 10px;font-size:10px;cursor:pointer;font-family:inherit}
+/* Versions overlay */
+#versions{position:fixed;inset:0;z-index:8600;background:#f3f1ea;display:none;overflow:auto;color:#1e241f}
+#versions.show{display:block}
+.vtabs{display:flex;gap:6px;margin:0 0 22px;flex-wrap:wrap}
+.vtabs button{padding:10px 18px;border-radius:30px;border:1.5px solid rgb(67,81,63);background:transparent;color:rgb(67,81,63);font-weight:700;font-size:12px;letter-spacing:.1em;cursor:pointer;font-family:var(--font-head)}
+.vtabs button.on{background:rgb(67,81,63);color:#fff}
+.vform{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:800px){.vform{grid-template-columns:1fr}}
+.vform label{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#5a635c;margin-bottom:6px;font-weight:700}
+.vform input,.vform textarea{width:100%;border:1px solid rgba(0,0,0,.15);border-radius:8px;padding:11px 12px;font:inherit;font-size:14px;background:#fff}
+.vform textarea{min-height:90px;resize:vertical}
+.vform .full{grid-column:1/-1}
+.vnote{font-size:12px;color:#5a635c;line-height:1.6}
+.vstatus{margin-top:14px;font-size:13px;padding:12px 14px;border-radius:8px;background:#fff;border:1px solid rgba(0,0,0,.08);min-height:20px}
+.vstatus.ok{border-color:#43A047;color:#2e7d32}.vstatus.err{border-color:#E53935;color:#c62828}
+.tl{display:flex;gap:14px;overflow-x:auto;padding:10px 4px 18px;scroll-snap-type:x mandatory}
+.tl .node{flex:0 0 250px;scroll-snap-align:start;background:#fff;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.06);padding:12px;position:relative}
+.tl .node img{width:100%;height:130px;object-fit:cover;border-radius:8px;background:#000;display:block}
+.tl .node h4{margin:10px 0 2px;font-size:15px;font-family:var(--font-head)}
+.tl .node .d{font-size:11px;color:#5a635c}
+.tl .node .notes{font-size:12px;margin:8px 0;line-height:1.5;max-height:54px;overflow:hidden}
+.tl .node .delta{font-size:11px;display:flex;flex-wrap:wrap;gap:6px}
+.tl .node .delta span{padding:2px 8px;border-radius:20px;background:rgba(0,0,0,.05)}
+.tl .node .delta .up{background:rgba(67,160,71,.15);color:#2e7d32}.tl .node .delta .dn{background:rgba(229,57,53,.15);color:#c62828}
+.tl .node::after{content:"";position:absolute;right:-14px;top:50%;width:14px;height:2px;background:rgba(67,81,63,.35)}
+.tl .node:last-child::after{display:none}
+.series-toggles{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.series-toggles label{font-size:11px;display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;background:#fff;border:1px solid rgba(0,0,0,.08);cursor:pointer}
+.cmp-sel{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+.cmp-sel select{padding:9px 12px;border-radius:8px;border:1px solid rgba(0,0,0,.15);font:inherit;font-size:13px;background:#fff}
+.cmp-grid{display:grid;gap:16px}
+.cmp-grid.c2{grid-template-columns:1fr 1fr}.cmp-grid.c3{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:900px){.cmp-grid.c2,.cmp-grid.c3{grid-template-columns:1fr}}
+.cmp-col{background:#fff;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.06);padding:14px}
+.cmp-col h3{margin:0 0 8px;font-size:16px;font-family:var(--font-head)}
+.cmp-col .d{font-size:11px;color:#5a635c;margin-bottom:10px}
+.cmp-col .chart-wrap{position:relative;height:190px;margin-top:12px}
+.cmp-col table.rt td.num i{font-style:normal;font-size:10px;margin-left:6px;padding:1px 6px;border-radius:10px}
+.cmp-col .up{background:rgba(67,160,71,.15);color:#2e7d32}.cmp-col .dn{background:rgba(229,57,53,.15);color:#c62828}
+.difflist{font-size:12px;line-height:1.7}
+.difflist b{font-family:var(--font-head)}
+.chip{display:inline-block;padding:2px 8px;border-radius:20px;background:rgba(0,0,0,.05);margin:0 4px 4px 0;font-size:11px}
 
 /* ─── Strategy menu (behind the lightbulb) ───────────────────────────── */
 #strategyBar{position:fixed;left:20px;top:112px;z-index:2147483000;display:none;flex-direction:column;gap:10px}
@@ -279,7 +328,7 @@ table.rt img.th{width:84px;height:56px;object-fit:cover;border-radius:8px;displa
 .bar{height:10px;border-radius:5px;background:rgba(0,0,0,.06);overflow:hidden;margin-top:14px;display:flex}
 .bar i{display:block;height:100%}
 .rp-foot{font-size:11px;color:#5a635c;margin-top:30px;text-align:center}
-@media print{ body *{visibility:hidden} #report,#report *{visibility:visible} #report{position:static;background:#fff;overflow:visible} .rp-tools{display:none!important} .kpi,.rp-card,.strat{box-shadow:none;border:1px solid #ddd;break-inside:avoid} .rp h2.sec{break-after:avoid} }
+@media print{ body *{visibility:hidden} #report.show,#report.show *,#versions.show,#versions.show *{visibility:visible} #report,#versions{position:static;background:#fff;overflow:visible} .rp-tools,.vtabs,.cmp-sel,.series-toggles,.vform{display:none!important} .kpi,.rp-card,.strat,.cmp-col,.tl .node{box-shadow:none;border:1px solid #ddd;break-inside:avoid} .rp h2.sec{break-after:avoid} .tl{flex-wrap:wrap;overflow:visible} }
 </style>
 </head>
 <body class="narrative locked">
@@ -299,6 +348,8 @@ table.rt img.th{width:84px;height:56px;object-fit:cover;border-radius:8px;displa
 <button id="amenitiesButton" class="topButton">AMENITIES</button>
 <button id="clusterButton" class="topButton">CLUSTER</button>
 <button id="reportButton">REPORTE GENERAL</button>
+<button id="versionsButton">VERSIONES</button>
+<div id="ghostPill"><span>FANTASMA 3D ACTIVO</span><button id="ghostOff">QUITAR</button></div>
 <div id="strategyBar"></div>
 <div id="areaLegend"><div class="legend-row" id="areaLegendRow"></div></div>
 
@@ -344,6 +395,7 @@ table.rt img.th{width:84px;height:56px;object-fit:cover;border-radius:8px;displa
 </div></div>
 <div class="modal" id="busyModal"><div class="box"><h3>GENERANDO REPORTE</h3><small id="busyText" style="opacity:.8">Capturando vistas del modelo…</small></div></div>
 <div id="report"><div class="rp" id="reportBody"></div></div>
+<div id="versions"><div class="rp" id="versionsBody"></div></div>
 
 <script>
 /* The whole application runs inside startApp(); the bootstrap at the end makes sure the
@@ -454,6 +506,12 @@ const CONFIG = {
   ],
   REGION_CAMERA: { center:[-87.50, 20.15], zoom:10.6, pitch:45 },   /* airport + site in one view */
   PENINSULA_CAMERA: { center:[-89.0, 20.4], zoom:6.3, pitch:35 },
+
+  /* Version history (saved in the GitHub repo: versions/index.json + one file per version).
+     githubToken: optional fine-grained PAT with "Contents: read/write" on this repo. It can also be
+     pasted at runtime (kept only in this browser's localStorage). Without a token the app downloads
+     the files for you to commit manually. */
+  VERSIONS: { owner:"CitiesoftheFuture", repo:"selvadentro", branch:"main", dir:"versions", modelsDir:"models", githubToken:"", thumbWidth:320 },
 
   /* The house designed by AMA — model to be added to the repo as HOUSE_V1.glb */
   HOUSE: { url:REPO + "HOUSE_V1.glb", lot:"A1", name:"Casa AMA · V1", offset:{x:0, y:0, z:0.6}, scale:1,
@@ -1293,10 +1351,8 @@ map.on("click", e => {
 /* ══════════════════════════════════════════════════════════════════════
    REPORTE GENERAL
    ══════════════════════════════════════════════════════════════════════ */
-$("reportButton").onclick = () => { $("pwModal").classList.add("show"); $("pwErr").textContent = ""; $("pwInput").value = ""; setTimeout(() => $("pwInput").focus(), 50); };
 $("pwCancel").onclick = () => $("pwModal").classList.remove("show");
-$("pwOk").onclick = checkPw; $("pwInput").addEventListener("keydown", e => { if (e.key === "Enter") checkPw(); });
-function checkPw(){ if ($("pwInput").value === CONFIG.REPORT_PASSWORD){ $("pwModal").classList.remove("show"); openReport(); } else $("pwErr").textContent = "Contraseña incorrecta."; }
+$("pwOk").onclick = () => checkPw(); $("pwInput").addEventListener("keydown", e => { if (e.key === "Enter") checkPw(); });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function waitIdle(maxMs){ return Promise.race([ new Promise(r => map.once("idle", r)), sleep(maxMs) ]); }
 async function snapshot(mode){
@@ -1309,13 +1365,9 @@ async function snapshot(mode){
   return map.getCanvas().toDataURL("image/jpeg", 0.88);
 }
 async function openReport(){
-  finishGrowLots(); $("busyModal").classList.add("show");
-  const saved = { center:map.getCenter(), zoom:map.getZoom(), pitch:map.getPitch(), bearing:map.getBearing(), mode: statusMode?"status":areaMode?"area":amenitiesMode?"amenities":clusterMode?"cluster":null, trees: treesGroup ? treesGroup.visible : true };
-  if (selectionLight){ tb.remove(selectionLight); selectionLight = null; } if (selectedObject && originalMaterial){ selectedObject.material = originalMaterial; selectedObject = null; }
-  infoBox.classList.remove("visible"); if (treesGroup) treesGroup.visible = false;
-  const shots = {}; for (const m of ["none","status","area","cluster","amenities"]){ $("busyText").textContent = `Capturando vista: ${m === "none" ? "general" : m}…`; shots[m] = await snapshot(m); }
-  applyMode(saved.mode); if (!saved.mode) hideLegend(); if (treesGroup) treesGroup.visible = saved.trees; map.jumpTo(saved); $("busyModal").classList.remove("show");
-  renderReport(shots);
+  $("busyModal").classList.add("show");
+  const shots = await captureAllShots(m => { $("busyText").textContent = `Capturando vista: ${m === "none" ? "general" : m}…`; });
+  $("busyModal").classList.remove("show"); renderReport(shots);
 }
 function renderReport(shots){
   const lots = getLots(), total = lots.length, st = statusStats(lots), ar = areaStats(lots), amen = getAmenities();
@@ -1381,6 +1433,204 @@ function renderReport(shots){
   reportCharts.push(new Chart($("rcArea"), { type:"bar", data:{ labels:ar.map(c=>c.label), datasets:[{ data:ar.map(c=>c.count), backgroundColor:ar.map(c=>c.color), borderRadius:8 }] }, options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true, ticks:{precision:0}}, x:{grid:{display:false}} } } }));
   reportCharts.push(new Chart($("rcStatus"), { type:"doughnut", data:{ labels:["Disponible","Reservado","Vendido"], datasets:[{ data:[st.disponible, st.reservado, st.vendido], backgroundColor:[CONFIG.STATUS_COLORS.disponible, CONFIG.STATUS_COLORS.reservado, CONFIG.STATUS_COLORS.vendido], borderWidth:0 }] }, options:{ responsive:true, maintainAspectRatio:false, animation:false, cutout:"60%", plugins:{legend:{position:"bottom"}} } }));
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   VERSIONS — save snapshots, timeline, comparator, 3D ghost
+   ══════════════════════════════════════════════════════════════════════ */
+const V = CONFIG.VERSIONS;
+const RAW = path => `https://raw.githubusercontent.com/${V.owner}/${V.repo}/${V.branch}/${path}`;
+const API = path => `https://api.github.com/repos/${V.owner}/${V.repo}/contents/${path}`;
+const ghToken = () => V.githubToken || localStorage.getItem("sd_gh_token") || "";
+const todayISO = () => { const d = new Date(), z = n => String(n).padStart(2,"0"); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`; };
+let versionIndex = null, versionCache = {}, ghostObj = null, vCharts = [];
+
+/* Metrics for one snapshot (same maths as the report) */
+function computeMetrics(lots, amen){
+  const sum = (arr, f) => arr.reduce((a,l) => a + f(l), 0), st = statusStats(lots);
+  const m2 = sum(lots, l=>l.area), m2c = sum(lots, l=>l.construible), usd = sum(lots, l=>l.usd);
+  const series = {}; lots.forEach(l => { const s = series[l.series] = series[l.series] || {n:0,disp:0,usd:0,m2:0}; s.n++; s.m2 += l.area; s.usd += l.usd; if (l.status === "disponible") s.disp++; });
+  return { lots:lots.length, m2, m2c, usd, usdAvail:sum(lots.filter(l=>l.status==="disponible"), l=>l.usd), usdPlaced:sum(lots.filter(l=>l.status!=="disponible"), l=>l.usd),
+    disponible:st.disponible, reservado:st.reservado, vendido:st.vendido, pctPlaced: lots.length ? (st.reservado+st.vendido)/lots.length*100 : 0,
+    areaCats:areaStats(lots).map(c => c.count), series, amenities:amen.length, amenM2:sum(amen, a => a.m2 || 0), jungleHa:CONFIG.JUNGLE_KEPT_HA, pricePerM2: m2 ? usd/m2 : 0 };
+}
+async function captureAllShots(progress){
+  finishGrowLots(); showAllSel();
+  const saved = { center:map.getCenter(), zoom:map.getZoom(), pitch:map.getPitch(), bearing:map.getBearing(), mode: statusMode?"status":areaMode?"area":amenitiesMode?"amenities":clusterMode?"cluster":null, trees: treesGroup ? treesGroup.visible : true };
+  if (selectionLight){ tb.remove(selectionLight); selectionLight = null; } if (selectedObject && originalMaterial){ selectedObject.material = originalMaterial; selectedObject = null; }
+  infoBox.classList.remove("visible"); if (treesGroup) treesGroup.visible = false; const ghostWas = ghostObj && ghostObj.visible; if (ghostObj) ghostObj.visible = false;
+  const shots = {}; for (const m of ["none","status","area","cluster","amenities"]){ progress && progress(m); shots[m] = await snapshot(m); }
+  applyMode(saved.mode); if (!saved.mode) hideLegend(); if (treesGroup) treesGroup.visible = saved.trees; if (ghostObj) ghostObj.visible = ghostWas; map.jumpTo(saved);
+  return shots;
+}
+function makeThumb(dataURL, width){ return new Promise(res => { const im = new Image(); im.onload = () => { const c = document.createElement("canvas"); c.width = width; c.height = Math.round(width * im.height / im.width); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL("image/jpeg", 0.7)); }; im.src = dataURL; }); }
+const b64utf8 = str => btoa(unescape(encodeURIComponent(str)));
+
+async function fetchIndex(force){
+  if (versionIndex && !force) return versionIndex;
+  try{ const r = await fetch(RAW(`${V.dir}/index.json`) + "?t=" + Date.now(), { cache:"no-store" }); versionIndex = r.ok ? await r.json() : { versions:[] }; }
+  catch(e){ versionIndex = { versions:[] }; }
+  versionIndex.versions = (versionIndex.versions || []).sort((a,b) => a.n - b.n); return versionIndex;
+}
+async function fetchVersion(entry){
+  if (versionCache[entry.file]) return versionCache[entry.file];
+  const r = await fetch(RAW(entry.file) + "?t=" + Date.now(), { cache:"no-store" }); if (!r.ok) throw new Error("No se pudo leer " + entry.file);
+  return versionCache[entry.file] = await r.json();
+}
+async function ghPut(path, contentStr, message){
+  const token = ghToken(); const headers = { Authorization:"Bearer " + token, Accept:"application/vnd.github+json", "Content-Type":"application/json" };
+  let sha; const g = await fetch(API(path) + `?ref=${V.branch}`, { headers }); if (g.ok) sha = (await g.json()).sha;
+  const r = await fetch(API(path), { method:"PUT", headers, body:JSON.stringify({ message, content:b64utf8(contentStr), branch:V.branch, sha }) });
+  if (!r.ok) throw new Error(`GitHub ${r.status}: ${(await r.text()).slice(0,140)}`);
+  return r.json();
+}
+function downloadText(name, text){ const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], {type:"application/json"})); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+
+/* ── Save a version ── */
+async function saveVersion(form, statusEl){
+  const set = (t, cls) => { statusEl.textContent = t; statusEl.className = "vstatus " + (cls || ""); };
+  try{
+    set("Leyendo índice de versiones…"); const idx = await fetchIndex(true);
+    const n = (idx.versions.length ? Math.max(...idx.versions.map(v => v.n)) : 0) + 1, id = "v" + String(n).padStart(3,"0"), date = new Date().toISOString();
+    if (form.jungle) CONFIG.JUNGLE_KEPT_HA = parseFloat(form.jungle) || CONFIG.JUNGLE_KEPT_HA;
+    set("Capturando plantas del modelo…"); $("versions").classList.remove("show");
+    const shots = await captureAllShots(m => set(`Capturando planta: ${m}…`)); $("versions").classList.add("show");
+    const lots = getLots(), amen = getAmenities(), metrics = computeMetrics(lots, amen), thumb = await makeThumb(shots.none, V.thumbWidth);
+    const file = `${V.dir}/${id}_${todayISO()}.json`;
+    const entry = { id, n, date, label:form.label || id, notes:form.notes || "", file, model:form.model || null, thumb, metrics };
+    const full = { ...entry, project:CONFIG.PROJECT, usdToMxn:CONFIG.USD_TO_MXN, lots, amenities:amen.map(a => ({ name:a.name, m2:a.m2 })), shots };
+    const newIndex = { project:CONFIG.PROJECT, updated:date, versions:[...idx.versions, entry] };
+    if (ghToken()){
+      set("Publicando en GitHub (archivo de versión)…"); await ghPut(file, JSON.stringify(full), `${id}: ${entry.label}`);
+      set("Publicando en GitHub (index.json)…"); await ghPut(`${V.dir}/index.json`, JSON.stringify(newIndex, null, 1), `index: add ${id}`);
+      versionIndex = newIndex; versionCache[file] = full;
+      set(`✓ ${id} publicada en ${V.owner}/${V.repo}/${file}. ${form.model ? "Recuerda subir el GLB como " + form.model + "." : ""}`, "ok");
+    } else {
+      downloadText(`${id}_${todayISO()}.json`, JSON.stringify(full)); setTimeout(() => downloadText("index.json", JSON.stringify(newIndex, null, 1)), 600);
+      versionIndex = newIndex; versionCache[file] = full;
+      set(`✓ Archivos generados. Sube "${id}_${todayISO()}.json" a la carpeta ${V.dir}/ del repo y reemplaza ${V.dir}/index.json. ${form.model ? "Sube también el GLB como " + form.model + "." : ""}`, "ok");
+    }
+  }catch(e){ console.error(e); set("Error: " + e.message, "err"); }
+}
+
+/* ── Diffs between two versions (needs full files with lots) ── */
+function diffVersions(a, b){
+  const A = new Map((a.lots||[]).map(l => [l.index, l])), B = new Map((b.lots||[]).map(l => [l.index, l]));
+  const added = [...B.keys()].filter(k => !A.has(k)), removed = [...A.keys()].filter(k => !B.has(k));
+  const areaChanged = [], statusChanged = [], priceChanged = [];
+  B.forEach((l,k) => { const o = A.get(k); if (!o) return; if (Math.abs(o.area - l.area) > 0.5) areaChanged.push({k, from:o.area, to:l.area});
+    if (o.status !== l.status) statusChanged.push({k, from:o.status, to:l.status}); if (Math.abs(o.usd - l.usd) > 0.5) priceChanged.push({k, from:o.usd, to:l.usd}); });
+  return { added, removed, areaChanged, statusChanged, priceChanged };
+}
+const deltaChip = (label, a, b, fmt = fmtInt, invert = false) => { const d = b - a; if (!d) return `<span>${label} =</span>`; const up = invert ? d < 0 : d > 0; return `<span class="${up ? "up" : "dn"}">${label} ${d > 0 ? "+" : "−"}${fmt(Math.abs(d))}</span>`; };
+
+/* ── Overlay + tabs ── */
+$("versionsButton").onclick = () => { $("pwModal").classList.add("show"); $("pwErr").textContent = ""; $("pwInput").value = ""; $("pwModal").dataset.target = "versions"; setTimeout(() => $("pwInput").focus(), 50); };
+$("reportButton").onclick = () => { $("pwModal").classList.add("show"); $("pwErr").textContent = ""; $("pwInput").value = ""; $("pwModal").dataset.target = "report"; setTimeout(() => $("pwInput").focus(), 50); };
+function checkPw(){ if ($("pwInput").value === CONFIG.REPORT_PASSWORD){ $("pwModal").classList.remove("show"); $("pwModal").dataset.target === "versions" ? openVersions("save") : openReport(); } else $("pwErr").textContent = "Contraseña incorrecta."; }
+
+async function openVersions(tab){
+  vCharts.forEach(c => c.destroy()); vCharts = [];
+  const B = $("versionsBody"); $("versions").classList.add("show");
+  B.innerHTML = `<div class="rp-head"><div><img src="${CONFIG.LOGO}" alt=""><h1>Versiones del proyecto</h1><div class="meta">Historial guardado en ${V.owner}/${V.repo}/${V.dir}</div></div>
+    <div class="rp-tools"><button class="print" onclick="window.print()">IMPRIMIR / PDF</button><button class="close" id="versionsClose">CERRAR</button></div></div>
+    <div class="vtabs"><button data-tab="save">Guardar versión</button><button data-tab="timeline">Línea de tiempo</button><button data-tab="compare">Comparador</button></div><div id="vpane"><div class="vnote">Cargando…</div></div>`;
+  $("versionsClose").onclick = () => { $("versions").classList.remove("show"); vCharts.forEach(c => c.destroy()); vCharts = []; };
+  B.querySelectorAll("[data-tab]").forEach(b => { b.classList.toggle("on", b.dataset.tab === tab); b.onclick = () => openVersions(b.dataset.tab); });
+  const idx = await fetchIndex(true); const pane = $("vpane");
+  if (tab === "save") renderSaveTab(pane, idx); else if (tab === "timeline") renderTimeline(pane, idx); else renderCompare(pane, idx);
+}
+
+function renderSaveTab(pane, idx){
+  const n = (idx.versions.length ? Math.max(...idx.versions.map(v => v.n)) : 0) + 1, id = "v" + String(n).padStart(3,"0");
+  pane.innerHTML = `<div class="rp-card"><div class="vform">
+      <div><label>Etiqueta</label><input id="vf-label" value="${id} · ${todayISO()}"></div>
+      <div><label>GLB de esta versión (opcional, para el fantasma 3D)</label><input id="vf-model" value="${V.modelsDir}/SELVA3D_${todayISO()}.glb"></div>
+      <div class="full"><label>Notas de cambio</label><textarea id="vf-notes" placeholder="Qué cambió en el modelo o en los datos…"></textarea></div>
+      <div><label>Selva conservada (ha)</label><input id="vf-jungle" type="number" step="0.1" value="${CONFIG.JUNGLE_KEPT_HA}"></div>
+      <div><label>Token de GitHub (opcional · se guarda solo en este navegador)</label><input id="vf-token" type="password" value="${localStorage.getItem("sd_gh_token") || ""}" placeholder="github_pat_…"></div>
+      <div class="full vnote">Al guardar, la app captura las cinco plantas del modelo con el encuadre fijo, calcula todas las métricas, guarda el inventario completo de lotes y publica <b>${id}</b> en el repositorio (con token) o descarga los archivos para que los subas. Si reemplazaste el modelo, sube también el GLB con el nombre indicado para poder compararlo en 3D después.</div>
+      <div class="full"><button class="btn-gold" id="vf-save" style="color:#fff;background:#D4AF37">Capturar y guardar ${id}</button></div>
+    </div><div class="vstatus" id="vf-status">${idx.versions.length ? idx.versions.length + " versiones existentes · última: " + idx.versions[idx.versions.length-1].label : "Aún no hay versiones guardadas."}</div></div>`;
+  $("vf-token").onchange = e => { if (e.target.value) localStorage.setItem("sd_gh_token", e.target.value.trim()); else localStorage.removeItem("sd_gh_token"); };
+  $("vf-save").onclick = () => { $("vf-token").onchange({target:$("vf-token")}); saveVersion({ label:$("vf-label").value.trim(), notes:$("vf-notes").value.trim(), model:$("vf-model").value.trim() || null, jungle:$("vf-jungle").value }, $("vf-status")); };
+}
+
+function renderTimeline(pane, idx){
+  const vs = idx.versions; if (!vs.length){ pane.innerHTML = `<div class="rp-card vnote">Aún no hay versiones. Guarda la primera desde la pestaña “Guardar versión”.</div>`; return; }
+  const fD = d => new Date(d).toLocaleDateString("es-MX", { day:"2-digit", month:"short", year:"numeric" });
+  pane.innerHTML = `<h2 class="sec">Línea de tiempo · ${vs.length} versiones</h2><div class="tl">${vs.map((v,i) => { const p = vs[i-1], m = v.metrics, pm = p && p.metrics;
+      return `<div class="node"><img src="${v.thumb || ""}" alt=""><h4>${v.label}</h4><div class="d">${fD(v.date)}${v.model ? " · GLB guardado" : ""}</div><div class="notes">${v.notes || "<i>Sin notas</i>"}</div>
+        <div class="delta">${pm ? deltaChip("lotes", pm.lots, m.lots) + deltaChip("m² const.", pm.m2c, m.m2c) + deltaChip("vendidos", pm.vendido, m.vendido) + deltaChip("valor", pm.usd, m.usd, n => "$" + fmtInt(n)) : "<span>versión inicial</span>"}</div></div>`; }).join("")}</div>
+    <h2 class="sec">Evolución de todas las versiones</h2>
+    <div class="rp-card"><div class="series-toggles" id="tl-toggles"></div><div class="chart-wrap" style="height:320px"><canvas id="tl-chart"></canvas></div></div>
+    <div class="rp-grid"><div class="rp-card"><h3>Estado por versión</h3><div class="chart-wrap"><canvas id="tl-status"></canvas></div></div>
+      <div class="rp-card"><h3>Resumen</h3><table class="rt"><tr><th>Versión</th><th class="num">Lotes</th><th class="num">m² const.</th><th class="num">Valor USD</th><th class="num">Colocado</th><th class="num">Selva ha</th></tr>
+      ${vs.map(v => `<tr><td>${v.label}</td><td class="num">${v.metrics.lots}</td><td class="num">${fmtInt(v.metrics.m2c)}</td><td class="num">${fmtInt(v.metrics.usd)}</td><td class="num">${v.metrics.pctPlaced.toFixed(0)}%</td><td class="num">${v.metrics.jungleHa}</td></tr>`).join("")}</table></div></div>`;
+  const series = [
+    { key:"lots", label:"Lotes", color:"#2f5d3a", axis:"y" }, { key:"m2c", label:"m² construibles", color:"#5F98D3", axis:"y2" }, { key:"m2", label:"m² totales", color:"#9C74AB", axis:"y2", off:true },
+    { key:"usd", label:"Valor USD", color:"#D4AF37", axis:"y3" }, { key:"usdAvail", label:"Valor disponible USD", color:"#E3BE63", axis:"y3", off:true },
+    { key:"pctPlaced", label:"% colocado", color:"#E53935", axis:"y" }, { key:"jungleHa", label:"Selva (ha)", color:"#7ED957", axis:"y" }, { key:"amenities", label:"Amenidades", color:"#26A69A", axis:"y", off:true } ];
+  const labels = vs.map(v => v.label.split(" · ")[0] + "\n" + fD(v.date));
+  Chart.defaults.font.family = CONFIG.FONT.text.family; Chart.defaults.color = "#4b524d";
+  const ch = new Chart($("tl-chart"), { type:"line", data:{ labels, datasets:series.map(s => ({ label:s.label, data:vs.map(v => +(v.metrics[s.key] || 0).toFixed(1)), borderColor:s.color, backgroundColor:s.color, tension:.3, yAxisID:s.axis, hidden:!!s.off, pointRadius:4 })) },
+    options:{ responsive:true, maintainAspectRatio:false, interaction:{ mode:"index", intersect:false }, plugins:{ legend:{ display:false } },
+      scales:{ y:{ position:"left", title:{display:true, text:"conteo / % / ha"} }, y2:{ position:"right", grid:{drawOnChartArea:false}, title:{display:true, text:"m²"} }, y3:{ position:"right", grid:{drawOnChartArea:false}, title:{display:true, text:"USD"}, ticks:{ callback:v => "$" + (v/1e6).toFixed(1) + "M" } } } } });
+  vCharts.push(ch);
+  $("tl-toggles").innerHTML = series.map((s,i) => `<label><input type="checkbox" data-i="${i}" ${s.off ? "" : "checked"}><span class="dot" style="background:${s.color};margin:0"></span>${s.label}</label>`).join("");
+  $("tl-toggles").querySelectorAll("input").forEach(cb => cb.onchange = () => { ch.setDatasetVisibility(+cb.dataset.i, cb.checked); ch.update(); });
+  vCharts.push(new Chart($("tl-status"), { type:"bar", data:{ labels, datasets:["disponible","reservado","vendido"].map(k => ({ label:k, data:vs.map(v => v.metrics[k]), backgroundColor:CONFIG.STATUS_COLORS[k], stack:"s" })) }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:"bottom"}}, scales:{ x:{stacked:true}, y:{stacked:true, beginAtZero:true} } } }));
+}
+
+function renderCompare(pane, idx){
+  const vs = idx.versions; if (vs.length < 2){ pane.innerHTML = `<div class="rp-card vnote">Se necesitan al menos dos versiones guardadas para comparar.</div>`; return; }
+  const opt = sel => vs.map(v => `<option value="${v.n}" ${sel === v.n ? "selected" : ""}>${v.label}</option>`).join("");
+  const last = vs[vs.length-1].n, prev = vs[vs.length-2].n;
+  pane.innerHTML = `<div class="cmp-sel"><label>Versiones:</label><select id="cmp-a">${opt(prev)}</select><select id="cmp-b">${opt(last)}</select><select id="cmp-c"><option value="">— tercera (opcional) —</option>${opt(null)}</select>
+      <label style="margin-left:auto">Planta:</label><select id="cmp-shot"><option value="none">General</option><option value="status">Estado</option><option value="area">Superficie</option><option value="cluster">Cluster</option><option value="amenities">Amenidades</option></select></div>
+    <div id="cmp-out" class="vnote">Cargando versiones…</div>`;
+  const run = async () => {
+    vCharts.forEach(c => c.destroy()); vCharts = [];
+    const picks = ["cmp-a","cmp-b","cmp-c"].map(id => $(id).value).filter(Boolean).map(n => vs.find(v => v.n === +n)); const shotKey = $("cmp-shot").value;
+    const out = $("cmp-out"); out.innerHTML = "Cargando versiones…";
+    let full; try { full = await Promise.all(picks.map(fetchVersion)); } catch(e){ out.innerHTML = `<div class="rp-card vnote">${e.message}</div>`; return; }
+    const base = full[0].metrics, fD = d => new Date(d).toLocaleDateString("es-MX", { day:"2-digit", month:"short", year:"numeric" });
+    const row = (label, key, fmt = fmtInt, invert = false) => `<tr><td>${label}</td>${full.map((f,i) => { const v = f.metrics[key], d = v - base[key]; return `<td class="num">${fmt(v)}${i && d ? `<i class="${(invert ? d < 0 : d > 0) ? "up" : "dn"}">${d > 0 ? "+" : "−"}${fmt(Math.abs(d))}</i>` : ""}</td>`; }).join("")}</tr>`;
+    out.innerHTML = `<div class="cmp-grid c${full.length}">${full.map((f,i) => `<div class="cmp-col"><h3>${f.label}</h3><div class="d">${fD(f.date)} · ${f.notes || "sin notas"}</div>
+        <img class="shot" src="${(f.shots || {})[shotKey] || f.thumb}" alt="">
+        <div class="chart-wrap"><canvas id="cmp-st-${i}"></canvas></div><div class="chart-wrap"><canvas id="cmp-ar-${i}"></canvas></div>
+        ${f.model ? `<button class="btn-line" style="color:#1f1f1f;border-color:#1f1f1f;background:transparent;margin-top:10px;width:100%" data-ghost="${f.model}">Ver esta versión como fantasma 3D</button>` : ""}</div>`).join("")}</div>
+      <div class="rp-card" style="margin-top:16px"><h3>Datos</h3><table class="rt"><tr><th>Métrica</th>${full.map(f => `<th class="num">${f.label}</th>`).join("")}</tr>
+        ${row("Lotes","lots")}${row("m² lotes","m2")}${row("m² construibles","m2c")}${row("Valor total USD","usd", n => "$" + fmtInt(n))}${row("Valor disponible USD","usdAvail", n => "$" + fmtInt(n))}${row("Precio por m² USD","pricePerM2", n => "$" + fmtInt(n))}
+        ${row("Disponibles","disponible")}${row("Reservados","reservado")}${row("Vendidos","vendido")}${row("% colocado","pctPlaced", n => n.toFixed(1) + "%")}${row("Amenidades","amenities")}${row("m² amenidades","amenM2")}${row("Selva conservada (ha)","jungleHa", n => n)}</table></div>
+      <div class="rp-card"><h3>Cambios detectados</h3><div class="difflist">${full.slice(1).map((f,i) => { const d = diffVersions(full[i], f);
+        return `<p><b>${full[i].label} → ${f.label}</b><br>
+          ${d.added.length ? `Lotes nuevos (${d.added.length}): ${d.added.map(k => `<span class="chip">${k}</span>`).join("")}<br>` : ""}
+          ${d.removed.length ? `Lotes eliminados (${d.removed.length}): ${d.removed.map(k => `<span class="chip">${k}</span>`).join("")}<br>` : ""}
+          ${d.areaChanged.length ? `Cambios de superficie (${d.areaChanged.length}): ${d.areaChanged.slice(0,30).map(c => `<span class="chip">${c.k}: ${fmtInt(c.from)} → ${fmtInt(c.to)} m²</span>`).join("")}${d.areaChanged.length > 30 ? "…" : ""}<br>` : ""}
+          ${d.statusChanged.length ? `Cambios de estado (${d.statusChanged.length}): ${d.statusChanged.slice(0,30).map(c => `<span class="chip">${c.k}: ${c.from} → ${c.to}</span>`).join("")}${d.statusChanged.length > 30 ? "…" : ""}<br>` : ""}
+          ${d.priceChanged.length ? `Cambios de precio (${d.priceChanged.length}): ${d.priceChanged.slice(0,30).map(c => `<span class="chip">${c.k}: $${fmtInt(c.from)} → $${fmtInt(c.to)}</span>`).join("")}${d.priceChanged.length > 30 ? "…" : ""}` : ""}
+          ${!d.added.length && !d.removed.length && !d.areaChanged.length && !d.statusChanged.length && !d.priceChanged.length ? "Sin cambios en el inventario de lotes." : ""}</p>`; }).join("")}</div></div>`;
+    Chart.defaults.font.family = CONFIG.FONT.text.family; Chart.defaults.color = "#4b524d";
+    full.forEach((f,i) => { const m = f.metrics;
+      vCharts.push(new Chart($(`cmp-st-${i}`), { type:"doughnut", data:{ labels:["Disponible","Reservado","Vendido"], datasets:[{ data:[m.disponible, m.reservado, m.vendido], backgroundColor:[CONFIG.STATUS_COLORS.disponible, CONFIG.STATUS_COLORS.reservado, CONFIG.STATUS_COLORS.vendido], borderWidth:0 }] }, options:{ responsive:true, maintainAspectRatio:false, animation:false, cutout:"60%", plugins:{ legend:{ position:"bottom", labels:{ boxWidth:10, font:{size:10} } } } } }));
+      vCharts.push(new Chart($(`cmp-ar-${i}`), { type:"bar", data:{ labels:CONFIG.AREA_CATS.map(c => c.label), datasets:[{ data:m.areaCats, backgroundColor:CONFIG.AREA_CATS.map(c => c.color), borderRadius:6 }] }, options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true, ticks:{precision:0} }, x:{ ticks:{ font:{size:9} } } } } })); });
+    out.querySelectorAll("[data-ghost]").forEach(b => b.onclick = () => { loadGhost(b.dataset.ghost); $("versions").classList.remove("show"); });
+  };
+  ["cmp-a","cmp-b","cmp-c","cmp-shot"].forEach(id => $(id).onchange = run); run();
+}
+
+/* ── 3D ghost: a previous GLB overlaid translucent on the current model ── */
+function removeGhost(){ if (ghostObj){ tb.remove(ghostObj); ghostObj = null; map.triggerRepaint(); } $("ghostPill").classList.remove("show"); }
+function loadGhost(modelPath){
+  removeGhost(); const M = CONFIG.MODELS.main; $("ghostPill").classList.add("show"); $("ghostPill").querySelector("span").textContent = "CARGANDO FANTASMA 3D…";
+  tb.loadObj({ obj:RAW(modelPath), type:"gltf", scale:1, units:"meters", rotation:CONFIG.LOAD_ROTATION }, obj => {
+    obj.setCoords(CONFIG.ORIGIN); obj.setRotation(CONFIG.SET_ROTATION); obj.translateX(M.translate.x); obj.translateY(M.translate.y); obj.translateZ(M.translate.z);
+    obj.traverse(c => { if (c.isMesh) c.material = new THREE.MeshStandardMaterial({ color:0xE53935, transparent:true, opacity:0.38, depthWrite:false, roughness:0.9 }); });
+    ghostObj = obj; tb.add(obj); map.triggerRepaint(); $("ghostPill").querySelector("span").textContent = "FANTASMA 3D · " + modelPath.split("/").pop();
+  });
+  setTimeout(() => { if (!ghostObj) $("ghostPill").querySelector("span").textContent = "NO SE ENCONTRÓ " + modelPath.split("/").pop(); }, 15000);
+}
+$("ghostOff").onclick = removeGhost;
 
 /* ══════════════════════════════════════════════════════════════════════
    BOOT
