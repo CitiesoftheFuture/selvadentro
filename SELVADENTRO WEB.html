@@ -417,7 +417,12 @@ const CONFIG = {
     fallbackText:"\"Courier New\", monospace", fallbackHead:"\"Helvetica Neue\", Arial, sans-serif" },
   MAPBOX_TOKEN: "pk.eyJ1IjoibWF1YmVybSIsImEiOiJjbDkwandiMXAwdDJkM3ZvNjhyNGtyYmtvIn0.f8f_PAURro1hU-sh_xnAuA",
   MAP_STYLE: "mapbox://styles/mapbox/satellite-v9",
+  /* Access password for Reporte / Versiones.
+     Recommended: leave REPORT_PASSWORD empty and put its SHA-256 in REPORT_PASSWORD_HASH (the
+     "Seguridad" box in Versiones → Guardar computes it). The typed password then also decrypts
+     the GitHub token stored in the repo (versions/token.enc), so nothing secret lives in this file. */
   REPORT_PASSWORD: "selvadentro2026",
+  REPORT_PASSWORD_HASH: "",
   USD_TO_MXN: 20.35,
 
   CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRZWWE457cq-C1YYscmXZbH6oSLbseAiC_0Rd1bFHCTV5gLHwKO8MNKwPEKWrEWvN5VBW5Wg8Zu4cQB/pub?output=csv",
@@ -511,7 +516,7 @@ const CONFIG = {
      githubToken: optional fine-grained PAT with "Contents: read/write" on this repo. It can also be
      pasted at runtime (kept only in this browser's localStorage). Without a token the app downloads
      the files for you to commit manually. */
-  VERSIONS: { owner:"CitiesoftheFuture", repo:"selvadentro", branch:"main", dir:"versions", modelsDir:"models", githubToken:"", thumbWidth:320 },
+  VERSIONS: { owner:"CitiesoftheFuture", repo:"selvadentro", branch:"main", dir:"versions", modelsDir:"models", githubToken:"", tokenFile:"versions/token.enc", thumbWidth:320 },
 
   /* The house designed by AMA — model to be added to the repo as HOUSE_V1.glb */
   HOUSE: { url:REPO + "HOUSE_V1.glb", lot:"A1", name:"Casa AMA · V1", offset:{x:0, y:0, z:0.6}, scale:1,
@@ -1440,7 +1445,22 @@ function renderReport(shots){
 const V = CONFIG.VERSIONS;
 const RAW = path => `https://raw.githubusercontent.com/${V.owner}/${V.repo}/${V.branch}/${path}`;
 const API = path => `https://api.github.com/repos/${V.owner}/${V.repo}/contents/${path}`;
-const ghToken = () => V.githubToken || localStorage.getItem("sd_gh_token") || "";
+let sessionPw = "", sessionToken = "";
+const ghToken = () => V.githubToken || sessionToken || localStorage.getItem("sd_gh_token") || "";
+/* ── WebCrypto helpers: SHA-256 for the password, AES-GCM (PBKDF2 key) for the token file ── */
+const enc = new TextEncoder(), dec = new TextDecoder();
+const toB64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf))), fromB64 = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));
+async function sha256Hex(str){ const h = await crypto.subtle.digest("SHA-256", enc.encode(str)); return [...new Uint8Array(h)].map(b => b.toString(16).padStart(2,"0")).join(""); }
+async function deriveKey(pw, salt){ const km = await crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name:"PBKDF2", salt, iterations:250000, hash:"SHA-256" }, km, { name:"AES-GCM", length:256 }, false, ["encrypt","decrypt"]); }
+async function encryptToken(token, pw){ const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12)); const key = await deriveKey(pw, salt);
+  const ct = await crypto.subtle.encrypt({ name:"AES-GCM", iv }, key, enc.encode(token)); return JSON.stringify({ v:1, salt:toB64(salt), iv:toB64(iv), ct:toB64(ct) }); }
+async function decryptToken(json, pw){ const o = JSON.parse(json); const key = await deriveKey(pw, fromB64(o.salt)); return dec.decode(await crypto.subtle.decrypt({ name:"AES-GCM", iv:fromB64(o.iv) }, key, fromB64(o.ct))); }
+async function loadRemoteToken(){                       /* fetch versions/token.enc and decrypt with the session password */
+  if (sessionToken || !V.tokenFile || !sessionPw) return;
+  try{ const r = await fetch(RAW(V.tokenFile) + "?t=" + Date.now(), { cache:"no-store" }); if (!r.ok) return; sessionToken = await decryptToken(await r.text(), sessionPw); console.log("GitHub token loaded from encrypted file"); }
+  catch(e){ console.warn("token.enc could not be decrypted with this password"); }
+}
 const todayISO = () => { const d = new Date(), z = n => String(n).padStart(2,"0"); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`; };
 let versionIndex = null, versionCache = {}, ghostObj = null, vCharts = [];
 
@@ -1526,14 +1546,20 @@ const deltaChip = (label, a, b, fmt = fmtInt, invert = false) => { const d = b -
 /* ── Overlay + tabs ── */
 $("versionsButton").onclick = () => { $("pwModal").classList.add("show"); $("pwErr").textContent = ""; $("pwInput").value = ""; $("pwModal").dataset.target = "versions"; setTimeout(() => $("pwInput").focus(), 50); };
 $("reportButton").onclick = () => { $("pwModal").classList.add("show"); $("pwErr").textContent = ""; $("pwInput").value = ""; $("pwModal").dataset.target = "report"; setTimeout(() => $("pwInput").focus(), 50); };
-function checkPw(){ if ($("pwInput").value === CONFIG.REPORT_PASSWORD){ $("pwModal").classList.remove("show"); $("pwModal").dataset.target === "versions" ? openVersions("save") : openReport(); } else $("pwErr").textContent = "Contraseña incorrecta."; }
+async function checkPw(){
+  const typed = $("pwInput").value;
+  const ok = CONFIG.REPORT_PASSWORD_HASH ? (await sha256Hex(typed)) === CONFIG.REPORT_PASSWORD_HASH.toLowerCase() : typed === CONFIG.REPORT_PASSWORD;
+  if (!ok){ $("pwErr").textContent = "Contraseña incorrecta."; return; }
+  sessionPw = typed; $("pwModal").classList.remove("show");
+  if ($("pwModal").dataset.target === "versions"){ await loadRemoteToken(); openVersions("timeline"); } else openReport();
+}
 
 async function openVersions(tab){
   vCharts.forEach(c => c.destroy()); vCharts = [];
   const B = $("versionsBody"); $("versions").classList.add("show");
-  B.innerHTML = `<div class="rp-head"><div><img src="${CONFIG.LOGO}" alt=""><h1>Versiones del proyecto</h1><div class="meta">Historial guardado en ${V.owner}/${V.repo}/${V.dir}</div></div>
+  B.innerHTML = `<div class="rp-head"><div><img src="${CONFIG.LOGO}" alt=""><h1>Versiones del proyecto</h1><div class="meta">Historial leído automáticamente de github.com/${V.owner}/${V.repo}/${V.dir} · ${ghToken() ? "token configurado ✓" : "sin token: las versiones nuevas se descargan para subirlas a mano"}</div></div>
     <div class="rp-tools"><button class="print" onclick="window.print()">IMPRIMIR / PDF</button><button class="close" id="versionsClose">CERRAR</button></div></div>
-    <div class="vtabs"><button data-tab="save">Guardar versión</button><button data-tab="timeline">Línea de tiempo</button><button data-tab="compare">Comparador</button></div><div id="vpane"><div class="vnote">Cargando…</div></div>`;
+    <div class="vtabs"><button data-tab="timeline">Línea de tiempo</button><button data-tab="compare">Comparador</button><button data-tab="save">Guardar nueva versión</button></div><div id="vpane"><div class="vnote">Cargando…</div></div>`;
   $("versionsClose").onclick = () => { $("versions").classList.remove("show"); vCharts.forEach(c => c.destroy()); vCharts = []; };
   B.querySelectorAll("[data-tab]").forEach(b => { b.classList.toggle("on", b.dataset.tab === tab); b.onclick = () => openVersions(b.dataset.tab); });
   const idx = await fetchIndex(true); const pane = $("vpane");
@@ -1548,17 +1574,29 @@ function renderSaveTab(pane, idx){
       <div class="full"><label>Notas de cambio</label><textarea id="vf-notes" placeholder="Qué cambió en el modelo o en los datos…"></textarea></div>
       <div><label>Selva conservada (ha)</label><input id="vf-jungle" type="number" step="0.1" value="${CONFIG.JUNGLE_KEPT_HA}"></div>
       <div><label>Token de GitHub (opcional · se guarda solo en este navegador)</label><input id="vf-token" type="password" value="${localStorage.getItem("sd_gh_token") || ""}" placeholder="github_pat_…"></div>
+      <div class="full" style="border-top:1px solid rgba(0,0,0,.08);padding-top:14px"><label>Seguridad · token cifrado en el repositorio</label>
+        <div class="vnote" style="margin-bottom:10px">Estado: ${sessionToken ? "token descifrado desde " + V.tokenFile + " ✓" : (V.tokenFile ? "no se encontró/descifró " + V.tokenFile : "desactivado")}. Para no revelar nada en el HTML: (1) copia el hash de tu contraseña en <code>CONFIG.REPORT_PASSWORD_HASH</code> y deja <code>REPORT_PASSWORD</code> vacío; (2) cifra el token con esa misma contraseña y súbelo como <code>${V.tokenFile}</code>. Al entrar, la contraseña que escribes lo descifra en memoria.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-line" style="color:#1f1f1f;border-color:#1f1f1f;background:transparent" id="vf-hash">Generar hash de la contraseña actual</button>
+          <button class="btn-line" style="color:#1f1f1f;border-color:#1f1f1f;background:transparent" id="vf-enc">Cifrar token y ${ghToken() ? "publicar" : "descargar"} ${V.tokenFile}</button></div>
+        <div class="vstatus" id="vf-sec" style="margin-top:10px;word-break:break-all"></div></div>
       <div class="full vnote">Al guardar, la app captura las cinco plantas del modelo con el encuadre fijo, calcula todas las métricas, guarda el inventario completo de lotes y publica <b>${id}</b> en el repositorio (con token) o descarga los archivos para que los subas. Si reemplazaste el modelo, sube también el GLB con el nombre indicado para poder compararlo en 3D después.</div>
       <div class="full"><button class="btn-gold" id="vf-save" style="color:#fff;background:#D4AF37">Capturar y guardar ${id}</button></div>
     </div><div class="vstatus" id="vf-status">${idx.versions.length ? idx.versions.length + " versiones existentes · última: " + idx.versions[idx.versions.length-1].label : "Aún no hay versiones guardadas."}</div></div>`;
+  $("vf-hash").onclick = async () => { const h = await sha256Hex(sessionPw); $("vf-sec").textContent = `REPORT_PASSWORD_HASH: "${h}"  ← pégalo en CONFIG y vacía REPORT_PASSWORD`; $("vf-sec").className = "vstatus ok"; };
+  $("vf-enc").onclick = async () => { const tok = $("vf-token").value.trim() || ghToken(); if (!tok){ $("vf-sec").textContent = "Escribe primero el token en el campo de arriba."; $("vf-sec").className = "vstatus err"; return; }
+    try{ const blob = await encryptToken(tok, sessionPw);
+      if (ghToken()){ await ghPut(V.tokenFile, blob, "token.enc"); $("vf-sec").textContent = `✓ ${V.tokenFile} publicado en el repo. Ya puedes borrar el token de este navegador y del CONFIG.`; }
+      else { downloadText("token.enc", blob); $("vf-sec").textContent = `✓ token.enc descargado. Súbelo al repo como ${V.tokenFile}.`; }
+      $("vf-sec").className = "vstatus ok"; }catch(e){ $("vf-sec").textContent = "Error: " + e.message; $("vf-sec").className = "vstatus err"; } };
   $("vf-token").onchange = e => { if (e.target.value) localStorage.setItem("sd_gh_token", e.target.value.trim()); else localStorage.removeItem("sd_gh_token"); };
   $("vf-save").onclick = () => { $("vf-token").onchange({target:$("vf-token")}); saveVersion({ label:$("vf-label").value.trim(), notes:$("vf-notes").value.trim(), model:$("vf-model").value.trim() || null, jungle:$("vf-jungle").value }, $("vf-status")); };
 }
 
 function renderTimeline(pane, idx){
-  const vs = idx.versions; if (!vs.length){ pane.innerHTML = `<div class="rp-card vnote">Aún no hay versiones. Guarda la primera desde la pestaña “Guardar versión”.</div>`; return; }
+  const vs = idx.versions; if (!vs.length){ pane.innerHTML = `<div class="rp-card vnote">No se encontró ninguna versión en <b>${V.owner}/${V.repo}/${V.dir}/index.json</b>. <button class="btn-gold" style="background:#D4AF37;color:#fff;margin-left:10px" data-tab="save">Guardar la primera versión</button></div>`; pane.querySelector("[data-tab]").onclick = () => openVersions("save"); return; }
   const fD = d => new Date(d).toLocaleDateString("es-MX", { day:"2-digit", month:"short", year:"numeric" });
-  pane.innerHTML = `<h2 class="sec">Línea de tiempo · ${vs.length} versiones</h2><div class="tl">${vs.map((v,i) => { const p = vs[i-1], m = v.metrics, pm = p && p.metrics;
+  pane.innerHTML = `<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 4px"><h2 class="sec" style="margin:0;flex:1">Línea de tiempo · ${vs.length} versiones encontradas en GitHub</h2>
+      <button class="btn-gold" style="background:#D4AF37;color:#fff" data-tab="compare">Comparar versiones →</button><button class="btn-line" style="color:#1f1f1f;border-color:#1f1f1f;background:transparent" data-tab="save">+ Nueva versión</button></div><div class="tl">${vs.map((v,i) => { const p = vs[i-1], m = v.metrics, pm = p && p.metrics;
       return `<div class="node"><img src="${v.thumb || ""}" alt=""><h4>${v.label}</h4><div class="d">${fD(v.date)}${v.model ? " · GLB guardado" : ""}</div><div class="notes">${v.notes || "<i>Sin notas</i>"}</div>
         <div class="delta">${pm ? deltaChip("lotes", pm.lots, m.lots) + deltaChip("m² const.", pm.m2c, m.m2c) + deltaChip("vendidos", pm.vendido, m.vendido) + deltaChip("valor", pm.usd, m.usd, n => "$" + fmtInt(n)) : "<span>versión inicial</span>"}</div></div>`; }).join("")}</div>
     <h2 class="sec">Evolución de todas las versiones</h2>
@@ -1566,6 +1604,7 @@ function renderTimeline(pane, idx){
     <div class="rp-grid"><div class="rp-card"><h3>Estado por versión</h3><div class="chart-wrap"><canvas id="tl-status"></canvas></div></div>
       <div class="rp-card"><h3>Resumen</h3><table class="rt"><tr><th>Versión</th><th class="num">Lotes</th><th class="num">m² const.</th><th class="num">Valor USD</th><th class="num">Colocado</th><th class="num">Selva ha</th></tr>
       ${vs.map(v => `<tr><td>${v.label}</td><td class="num">${v.metrics.lots}</td><td class="num">${fmtInt(v.metrics.m2c)}</td><td class="num">${fmtInt(v.metrics.usd)}</td><td class="num">${v.metrics.pctPlaced.toFixed(0)}%</td><td class="num">${v.metrics.jungleHa}</td></tr>`).join("")}</table></div></div>`;
+  pane.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => openVersions(b.dataset.tab));
   const series = [
     { key:"lots", label:"Lotes", color:"#2f5d3a", axis:"y" }, { key:"m2c", label:"m² construibles", color:"#5F98D3", axis:"y2" }, { key:"m2", label:"m² totales", color:"#9C74AB", axis:"y2", off:true },
     { key:"usd", label:"Valor USD", color:"#D4AF37", axis:"y3" }, { key:"usdAvail", label:"Valor disponible USD", color:"#E3BE63", axis:"y3", off:true },
