@@ -509,7 +509,7 @@ const CONFIG = {
     { name:"Tulum",                          lnglat:[-87.465, 20.211], kind:"town" },
     { name:"Carretera Federal 307",          lnglat:[-87.480, 20.262], kind:"road" }
   ],
-  REGION_CAMERA: { center:[-87.50, 20.15], zoom:9.6, pitch:45 },   /* airport + site in one view */
+  REGION_CAMERA: { center:[-87.50, 20.15], zoom:10.6, pitch:45 },   /* airport + site in one view */
   PENINSULA_CAMERA: { center:[-89.0, 20.4], zoom:6.3, pitch:35 },
 
   /* Version history (saved in the GitHub repo: versions/index.json + one file per version).
@@ -545,9 +545,9 @@ CONFIG.MAIN_STORY = {
   accent:"#D4AF37", endLabel:"Enter interactive mode",
   chapters:[
     /* 01 · Yucatán Peninsula */
-   { k:"Selvadentro", h:"The Project", p:"Selvadentro is a development located within the jungle of Quintana Roo, in the heart of the Yucatán Peninsula, just minutes from the beaches of Tulum.", media:{hero:I.mirador},
-  cam:{ custom:true, center:[-87.421729, 20.296090], zoom:5.44, pitch:0, bearing:0, duration:5000  },
-  actions:{ lotsHidden:true, hide:["streets","mainRoad"] } },
+    { k:"Selvadentro", h:"The Project", p:"Selvadentro is a development located within the jungle of Quintana Roo, in the heart of the Yucatán Peninsula, just minutes from the beaches of Tulum.", media:{hero:I.mirador},
+      cam:{ custom:true, center:CONFIG.PENINSULA_CAMERA.center, zoom:CONFIG.PENINSULA_CAMERA.zoom, pitch:CONFIG.PENINSULA_CAMERA.pitch, duration:5000 },
+      actions:{ lotsHidden:true, hide:["streets","mainRoad"] } },
     /* 02 · Tulum region: airport + site */
     { k:"Location", h:"Tulum, the airport and the site", p:"…with strategic access to the Tren Maya stations and the region’s new airport. From the air, the site sits between the coast, the highway and the new international airport.",
       cam:{ custom:true, center:CONFIG.REGION_CAMERA.center, zoom:CONFIG.REGION_CAMERA.zoom, pitch:CONFIG.REGION_CAMERA.pitch, duration:5000 },
@@ -1711,4 +1711,4 @@ $("ghostOff").onclick = removeGhost;
 })();
 </script>
 </body>
-</html>
+</html>...i want to rotate the first chapter....the one names....the project....so its on a normal view ....and then the rest of the chapter leave them how they are right now
