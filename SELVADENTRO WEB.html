@@ -241,6 +241,10 @@ body.interactive #progress{display:none}
 .poi i{width:12px;height:12px;border-radius:50%;background:#D4AF37;box-shadow:0 0 0 4px rgba(212,175,55,.35),0 0 18px rgba(212,175,55,.9);flex-shrink:0}
 .poi.site i{background:#7ED957;box-shadow:0 0 0 5px rgba(126,217,87,.35),0 0 22px rgba(126,217,87,.95);width:14px;height:14px}
 .poi.site span{font-weight:700;font-family:var(--font-head);font-size:13px;letter-spacing:.14em;text-transform:uppercase}
+/* Cenote number labels */
+.cenote-num{width:34px;height:34px;border-radius:50%;background:#F2C048;color:#1a1a1a;font-family:var(--font-head);font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 5px rgba(242,192,72,.3),0 0 26px rgba(242,192,72,.95);opacity:0;transform:scale(.4);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+.cenote-num.on{opacity:1;transform:scale(1)}
 /* CTA inside a card */
 .card .cta{margin-top:18px;display:inline-block}
 /* House element panel */
@@ -456,8 +460,11 @@ const CONFIG = {
   MODELS: {
     main:      { url:REPO + "SELVA3D.glb",        translate:{x:-0.057, y:-0.026, z:-0.025} },
     trees:     { url:REPO + "ARBOLES_NUEVOS.glb",  translate:{x:-1.22,  y:1.301,  z:0} },
-    triangles: { url:REPO + "triangulos.glb",      translate:{x:-0.057, y:-0.026, z:-0.025} }
+    triangles: { url:REPO + "triangulos.glb",      translate:{x:-0.057, y:-0.026, z:-0.025} },
+    cenotes:   { url:REPO + "cenotes.glb",         translate:{x:-0.057, y:-0.026, z:-0.025} }   /* 9 cylinders, lit one by one */
   },
+  /* Cenote "lights": order by the number in each mesh name (1–9), else west→east */
+  CENOTES: { total:7000, color:"#F2C048", beamHeight:180, beamOpacity:0.35, lightIntensity:35, lightDistance:90 },
 
   AREA_COLORS: {400:"#D9764A", 600:"#E3BE63", 800:"#7FB585", 1000:"#5F98D3", 1300:"#9C74AB"},   /* desaturated palette */
   AREA_CATS: [
@@ -518,6 +525,13 @@ const CONFIG = {
      the files for you to commit manually. */
   VERSIONS: { owner:"CitiesoftheFuture", repo:"selvadentro", branch:"main", dir:"versions", modelsDir:"models", githubToken:"", tokenFile:"versions/token.enc", thumbWidth:320 },
 
+  /* Camera targets by name. Chapters use cam:{ centerOn:"lot:A1" } (centre computed from the mesh);
+     put a fixed [lng, lat] here to override that computation for any lot/amenity/mesh target.
+     Example: "lot:A1": [-87.4290, 20.2905]  — the house is placed at this point too. */
+  TARGET_OVERRIDES: {
+    /* "lot:A1": [-87.4290, 20.2905], */
+  },
+
   /* The house designed by AMA — model to be added to the repo as HOUSE_V1.glb */
   HOUSE: { url:REPO + "HOUSE_V1.glb", lot:"A1", name:"Casa AMA · V1", offset:{x:0, y:0, z:0.6}, scale:1,
            loadRotation:{x:90, y:-90, z:0}, setRotation:{x:0, y:0, z:270} },
@@ -537,7 +551,7 @@ const I = CONFIG.IMG;
      cam.centerOn:"lot:A1"|"amenity:spa"|"mesh:regex" (camera target from the model),
      cta:{label, run:"house"} (button inside the card),
      actions:{ mode:"status"|"area"|"amenities"|"cluster", pulseLots, growLots:true|{lots:[..]}, lotsHidden, lotsOnly:[..],
-               hide:[MESH keys], reveal:{sel,total,color}, glow:{sel,color,total}, pois, links, house, housePanel, trees:bool,
+               hide:[MESH keys], reveal:{sel,total,color}, glow:{sel,color,total}, cenotes:true|"on" (cenotes.glb lights), pois, links, house, housePanel, trees:bool,
                treesColor:bool, triangles:bool, chart:"area"|"availability", orbit:bool,
                highlight:{ amenities:[names], nameRegex:"regex", series:[..], lots:[..], color, dim:bool } } }
    ────────────────────────────────────────────────────────────────────── */
@@ -545,9 +559,9 @@ CONFIG.MAIN_STORY = {
   accent:"#D4AF37", endLabel:"Enter interactive mode",
   chapters:[
     /* 01 · Yucatán Peninsula */
-   { k:"Selvadentro", h:"The Project", p:"Selvadentro is a development located within the jungle of Quintana Roo, in the heart of the Yucatán Peninsula, just minutes from the beaches of Tulum.", media:{hero:I.mirador},
-  cam:{ custom:true, center:[-87.421729, 20.296090], zoom:5.44, pitch:0, bearing:0, duration:5000 },
-  actions:{ lotsHidden:true, hide:["streets","mainRoad"] } },
+    { k:"Selvadentro", h:"The Project", p:"Selvadentro is a development located within the jungle of Quintana Roo, in the heart of the Yucatán Peninsula, just minutes from the beaches of Tulum.", media:{hero:I.mirador},
+      cam:{ custom:true, center:CONFIG.PENINSULA_CAMERA.center, zoom:CONFIG.PENINSULA_CAMERA.zoom, pitch:CONFIG.PENINSULA_CAMERA.pitch, duration:5000 },
+      actions:{ lotsHidden:true, hide:["streets","mainRoad"] } },
     /* 02 · Tulum region: airport + site */
     { k:"Location", h:"Tulum, the airport and the site", p:"…with strategic access to the Tren Maya stations and the region’s new airport. From the air, the site sits between the coast, the highway and the new international airport.",
       cam:{ custom:true, center:CONFIG.REGION_CAMERA.center, zoom:CONFIG.REGION_CAMERA.zoom, pitch:CONFIG.REGION_CAMERA.pitch, duration:5000 },
@@ -567,10 +581,10 @@ CONFIG.MAIN_STORY = {
     /* 06 · Nine cenotes */
     { k:"The cenotes", h:"Nine cenotes", p:"In this context, cenotes emerge as hidden jewels, whose conservation has been prioritized through specialist-led mapping and the implementation of restoration strategies. Nine cenotes were mapped inside the site; each one is protected by a buffer where nothing is built or paved.", media:{hero:I.cenote},
       stats:[{v:"9",l:"cenotes"}],
-      cam:{ duration:4400 }, actions:{ lotsHidden:true, hide:["streets","mainRoad"], glow:{ sel:"cenotes", color:"#F2C048", total:4500 } } },
+      cam:{ duration:4400 }, actions:{ lotsHidden:true, hide:["streets","mainRoad"], cenotes:true } },
     /* 07 · Main road */
     { k:"Mobility · The spine", ink:"#33406b", h:"One main road around the cenotes", p:"The master plan is organized into four phases, connected by a central spine that links residences and amenities. A single low-speed main road wraps around the cenotes, keeping them untouched at the centre of the plan.",
-      cam:{ duration:4400 }, actions:{ lotsHidden:true, hide:["streets"], reveal:{ sel:"mainRoad", total:3000, color:"#D4AF37" }, glow:{ sel:"cenotes", color:"#F2C048", total:1200 } } },
+      cam:{ duration:4400 }, actions:{ lotsHidden:true, hide:["streets"], reveal:{ sel:"mainRoad", total:3000, color:"#D4AF37" }, cenotes:"on" } },
     /* 08 · Amenities */
     { k:"Amenities", ink:"#8b4a2b", h:"The amenities designed by AMA", p:"Throughout the master plan, a series of amenities enhance the connection with nature. Casa de los Cenotes functions as the heart of the development; the Nido-Mirador offers immersive views into the jungle; Casa del Árbol serves as a gathering point; and spaces such as the Wellness area, Jungle Bar, and Holistic Pavilion integrate experiences of contemplation and introspection. The Kids Jungle, Jungle Gym, and Pets Jungle reinforce this relationship through outdoor recreational spaces.", media:{collage:[I.casaCenotes, I.spa, I.bar, I.gym]}, wide:true,
       cam:{ duration:4400 }, actions:{ lotsHidden:true, hide:["streets"], mode:"amenities", triangles:true } },
@@ -739,7 +753,7 @@ let modelCenter = CONFIG.MODEL_CENTER_FALLBACK.slice(), modelBounds = null;
 let modelOpacity = 1, treesOpacity = 0.35, orbiting = false, chart = null, reportCharts = [], modelsReady = false, splashDone = false;
 let clusterColorMap = {}, activeStory = null, mainStory = null, strategyStory = null, houseStory = null;
 let houseModel = null, houseLoading = null, houseMaterials = new WeakMap(), houseSelection = { group:null, mesh:null };
-const poiMarkers = []; let linksLayerReady = false; const revealAnims = []; const glowAnims = []; const lngLatCache = {};
+const poiMarkers = []; let linksLayerReady = false; let cenotesGroup = null; const cenoteFx = { beams:[], lights:[], markers:[], raf:null, items:[] }; const revealAnims = []; const glowAnims = []; const lngLatCache = {};
 
 /* ══════════════════════════════════════════════════════════════════════
    DATA
@@ -810,6 +824,13 @@ map.on("style.load", () => {
           place(tr, M.triangles.translate); triangulosModel = tr; triangulosGroup = new THREE.Group(); triangulosGroup.add(triangulosModel);
           triangulosModel.traverse(c => { if (c.isMesh && c.material){ c.castShadow = c.receiveShadow = true; c.material = new THREE.MeshPhongMaterial({ color:0x2196F3, emissive:0x0D47A1, emissiveIntensity:0.7, specular:0xffffff, shininess:100, side:THREE.DoubleSide }); c.geometry.center(); } });
           tb.add(triangulosGroup); triangulosGroup.visible = false;
+        });
+        /* ── Cenotes (9 cylinders) ── */
+        tb.loadObj({ obj:M.cenotes.url, type:"gltf", scale:1, units:"meters", rotation:CONFIG.LOAD_ROTATION }, cn => {
+          if (!cn) return; place(cn, M.cenotes.translate); cenotesGroup = cn;
+          cn.traverse(c => { if (c.isMesh){ c.material = new THREE.MeshStandardMaterial({ color:new THREE.Color(CONFIG.CENOTES.color), emissive:new THREE.Color(CONFIG.CENOTES.color), emissiveIntensity:0, roughness:0.4, metalness:0.1, transparent:true, opacity:0 }); } });
+          tb.add(cn); cn.visible = false; map.triggerRepaint();
+          const cur = activeStory && activeStory.current >= 0 && activeStory.chapters[activeStory.current]; if (cur && cur.actions && cur.actions.cenotes) lightCenotes(cur.actions.cenotes);   /* chapter already on screen */
         });
         checkReady();
       });
@@ -997,6 +1018,7 @@ function matchMesh(c, sel){
 }
 function meshesFor(sel){ const S = resolveSel(sel), out = []; if (terrainModel) terrainModel.traverse(c => { if (c.isMesh && matchMesh(c, S)) out.push(c); }); return out; }
 function lngLatOf(spec){                       /* "lot:A1" | "amenity:casa cenotes" | "mesh:regex" → [lng,lat] */
+  if (CONFIG.TARGET_OVERRIDES && CONFIG.TARGET_OVERRIDES[spec]) return CONFIG.TARGET_OVERRIDES[spec];
   if (lngLatCache[spec]) return lngLatCache[spec];
   const [type, val] = spec.split(":"); const sel = type === "lot" ? { lots:[val] } : type === "amenity" ? { amenities:[val] } : { nameRegex:val };
   const ms = meshesFor(sel); if (!ms.length) return null;
@@ -1031,6 +1053,49 @@ function glowSel(sel, opts = {}){
       c.material.emissiveIntensity = 1.6 * easeOut(k); c.material.color.copy(g.base).lerp(col, 0.6 * easeOut(k)); });
     map.triggerRepaint(); if (!done) glowAnims.push(requestAnimationFrame(step)); };
   glowAnims.push(requestAnimationFrame(step));
+}
+
+/* ─── The nine cenotes: cylinders that light up one by one with a beam to the sky ─── */
+function cenoteItems(){
+  if (cenoteFx.items.length || !cenotesGroup) return cenoteFx.items;
+  tb.world.updateMatrixWorld(true); const ms = []; cenotesGroup.traverse(c => { if (c.isMesh) ms.push(c); });
+  const items = ms.map(m => { const box = new THREE.Box3().setFromObject(m), center = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3());
+    const num = parseInt((String(m.name).match(/\d+/) || [NaN])[0], 10); return { mesh:m, box, center, size, num, top:new THREE.Vector3(center.x, center.y, box.max.z) }; });
+  items.sort((a,b) => (isNaN(a.num) || isNaN(b.num)) ? a.center.x - b.center.x : a.num - b.num);
+  items.forEach((it,i) => { it.label = isNaN(it.num) ? i + 1 : it.num; const ll = tb.unprojectFromWorld(it.center); it.lnglat = [ll[0], ll[1]]; });
+  return cenoteFx.items = items;
+}
+function clearCenoteFx(){
+  if (cenoteFx.raf){ cancelAnimationFrame(cenoteFx.raf); cenoteFx.raf = null; }
+  cenoteFx.beams.forEach(b => tb.world.remove(b)); cenoteFx.lights.forEach(l => tb.world.remove(l)); cenoteFx.markers.forEach(m => m.remove());
+  cenoteFx.beams = []; cenoteFx.lights = []; cenoteFx.markers = [];
+  if (cenotesGroup){ cenotesGroup.visible = false; cenotesGroup.traverse(c => { if (c.isMesh){ c.material.opacity = 0; c.material.emissiveIntensity = 0; } }); }
+  if (map) map.triggerRepaint();
+}
+function lightCenotes(mode){            /* true = animated sequence · "on" = instantly lit */
+  clearCenoteFx(); const items = cenoteItems(); if (!items.length){ console.warn("cenotes.glb not loaded yet"); return; }
+  const C = CONFIG.CENOTES, col = new THREE.Color(C.color), upm = tb.utils.projectedUnitsPerMeter(modelCenter[1]);
+  cenotesGroup.visible = true;
+  items.forEach((it, i) => {
+    const r = Math.max(it.size.x, it.size.y) * 0.5 || 2 * upm;
+    const geo = new THREE.CylinderGeometry(r * 0.9, r * 1.15, C.beamHeight * upm, 24, 1, true); geo.translate(0, C.beamHeight * upm / 2, 0); geo.rotateX(Math.PI / 2);   /* base at origin, pointing +Z */
+    const beam = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color:col, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide }));
+    beam.position.copy(it.top); beam.scale.z = 0.001; tb.world.add(beam); cenoteFx.beams.push(beam);
+    const light = new THREE.PointLight(col, 0, C.lightDistance * upm, 2); light.position.set(it.center.x, it.center.y, it.top.z + 4 * upm); tb.world.add(light); cenoteFx.lights.push(light);
+    const el = document.createElement("div"); el.className = "cenote-num"; el.textContent = it.label;
+    const mk = new mapboxgl.Marker({ element:el, anchor:"center", offset:[0, -28] }).setLngLat(it.lnglat).addTo(map); cenoteFx.markers.push(mk);
+    it.beam = beam; it.light = light; it.el = el;
+  });
+  const n = items.length, each = Math.max(900, C.total * 0.35), stagger = n > 1 ? (C.total - each) / (n - 1) : 0, easeOut = t => 1 - Math.pow(1 - t, 3);
+  const setK = (it, k) => { const e = easeOut(k); it.mesh.material.opacity = Math.min(1, e * 1.4); it.mesh.material.emissiveIntensity = 2.2 * e;
+    it.beam.scale.z = Math.max(0.001, e); it.beam.material.opacity = C.beamOpacity * e; it.light.intensity = C.lightIntensity * e; if (k > 0.15) it.el.classList.add("on"); };
+  if (mode === "on"){ items.forEach(it => setK(it, 1)); map.triggerRepaint(); return; }
+  const t0 = performance.now();
+  const step = now => { const t = now - t0;
+    items.forEach((it, i) => { const k = Math.min(1, Math.max(0, (t - i * stagger) / each)); setK(it, k);
+      if (k >= 1){ const pulse = 1 + 0.12 * Math.sin((now - t0) / 500 + i); it.beam.material.opacity = C.beamOpacity * pulse; it.mesh.material.emissiveIntensity = 2.2 * pulse; } });
+    map.triggerRepaint(); cenoteFx.raf = requestAnimationFrame(step); };
+  cenoteFx.raf = requestAnimationFrame(step);
 }
 
 /* ─── POIs + links (regional chapters) ─── */
@@ -1151,6 +1216,7 @@ function applyActions(a = {}){
   if (a.pulseLots) pulseLots();
   if (a.lotsHidden) collapseLots(); else if (a.lotsOnly) lotsOnly(a.lotsOnly); else if (a.growLots) growLots(a.growLots === true ? undefined : a.growLots); else finishGrowLots();
   showPois(!!a.pois); showLinks(!!a.links);
+  if (a.cenotes) lightCenotes(a.cenotes); else clearCenoteFx();
   showHouse(!!a.house); showHousePanel(!!a.housePanel);
   if (a.trees !== undefined && treesGroup){ treesGroup.visible = a.trees; if (a.trees) fadeTrees(1, 2000); }
   if (a.treesColor !== undefined) applyTreesStyle(!a.treesColor);
@@ -1160,7 +1226,7 @@ function applyActions(a = {}){
 }
 function revertActions(a = {}){
   if (a.orbit) slowOrbit(false); if (a.chart) hideChart(); if (a.growLots) finishGrowLots();
-  cancelAnims(revealAnims); cancelAnims(glowAnims);
+  cancelAnims(revealAnims); cancelAnims(glowAnims); if (a.cenotes) clearCenoteFx();
   if (a.triangles || a.mode === "amenities") toggleAmenityTriangles(false);
   if (a.treesColor) applyTreesStyle(true);
 }
@@ -1225,7 +1291,7 @@ class Story {
     if (this.scroller) this.scroller.destroy(); if (this.io) this.io.disconnect();
     window.removeEventListener("resize", this.onResize || (()=>{})); window.removeEventListener("scroll", this.onScroll || (()=>{}));
     this.mount.classList.remove("on"); this.mount.innerHTML = ""; this.current = -1; if (activeStory === this) activeStory = null;
-    showPois(false); showLinks(false); showHousePanel(false);
+    showPois(false); showLinks(false); showHousePanel(false); clearCenoteFx();
   }
 }
 /* Buttons inside cards (cta.run) */
@@ -1266,7 +1332,7 @@ function enterInteractive(){
   if (activeStory) activeStory.stop(); hideChart();
   document.body.classList.remove("narrative"); document.body.classList.add("interactive"); window.scrollTo(0,0);
   HANDLERS.forEach(h => map[h] && map[h].enable());
-  setModelOpacity(1); setTreesOpacity(1); resetAllMaterials(); clearOtherModes(null); finishGrowLots(); showAllSel(); cancelAnims(revealAnims); cancelAnims(glowAnims); showPois(false); showLinks(false); showHousePanel(false); if (houseModel) houseModel.visible = true;
+  setModelOpacity(1); setTreesOpacity(1); resetAllMaterials(); clearOtherModes(null); finishGrowLots(); showAllSel(); cancelAnims(revealAnims); cancelAnims(glowAnims); showPois(false); showLinks(false); showHousePanel(false); clearCenoteFx(); if (houseModel) houseModel.visible = true;
   if (triangulosGroup){ triangulosGroup.visible = false; triangulosGroup.traverse(c => { if (c.isMesh) c.scale.setScalar(1); }); }
   if (treesGroup){ treesGroup.visible = treesMode; applyTreesStyle(treesMode); }
   const cam = getInitialCamera(); map.flyTo({ center:cam.center, zoom:cam.zoom, pitch:cam.pitch, bearing:cam.bearing, duration:3500, essential:true });
@@ -1361,7 +1427,7 @@ $("pwOk").onclick = () => checkPw(); $("pwInput").addEventListener("keydown", e 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function waitIdle(maxMs){ return Promise.race([ new Promise(r => map.once("idle", r)), sleep(maxMs) ]); }
 async function snapshot(mode){
-  showAllSel(); applyMode(mode); if (mode !== "amenities") toggleAmenityTriangles(false);
+  showAllSel(); clearCenoteFx(); applyMode(mode); if (mode !== "amenities") toggleAmenityTriangles(false);
   const S = CONFIG.REPORT_SNAPSHOT;
   /* exact fit to the model, then zoom out so the margin equals marginRatio × model size per side */
   const cam = modelBounds ? map.cameraForBounds(modelBounds, { padding:0, bearing:S.bearing, pitch:0 }) : { center:modelCenter, zoom:14.6 };
@@ -1711,4 +1777,4 @@ $("ghostOff").onclick = removeGhost;
 })();
 </script>
 </body>
-</html>...i want to rotate the first chapter....the one names....the project....so its on a normal view ....and then the rest of the chapter leave them how they are right now
+</html>
